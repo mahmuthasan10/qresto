@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { publicApi } from '@/lib/api';
 import { useCartStore } from '@/stores/cartStore';
 import { Button, Card, CardBody, Badge, Modal } from '@/components/ui';
+import SessionTimer from '@/components/SessionTimer';
 import { ShoppingCart, Plus, Minus, Clock, MapPin, X, AlertTriangle, ChevronRight } from 'lucide-react';
 
 interface MenuItem {
@@ -248,10 +249,7 @@ export default function MenuPage() {
                             </div>
                         </div>
                         {sessionToken && (
-                            <div className="flex items-center gap-1 text-sm text-gray-500">
-                                <Clock className="w-4 h-4" />
-                                <span>30 dk</span>
-                            </div>
+                            <SessionTimer onExpire={() => router.push('/')} />
                         )}
                     </div>
                 </div>
@@ -264,8 +262,8 @@ export default function MenuPage() {
                                 key={cat.id}
                                 onClick={() => setActiveCategory(cat.id)}
                                 className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${activeCategory === cat.id
-                                        ? 'bg-orange-500 text-white'
-                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    ? 'bg-orange-500 text-white'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                     }`}
                             >
                                 {cat.icon && <span className="mr-1">{cat.icon}</span>}

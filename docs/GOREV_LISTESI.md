@@ -464,53 +464,53 @@ function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
 ### Hafta 6 - PWA ve Optimizasyon
 
 #### Session Timer Komponenti
-- [ ] Countdown timer (MM:SS)
-- [ ] 5 dakika kala uyarı (kırmızı, yanıp sönen)
-- [ ] Süre dolunca modal
-- [ ] Süre uzatma API çağrısı
-- [ ] LocalStorage ile senkronizasyon
+- [x] Countdown timer (MM:SS)
+- [x] 5 dakika kala uyarı (kırmızı, yanıp sönen)
+- [x] Süre dolunca modal
+- [x] Süre uzatma API çağrısı
+- [x] LocalStorage ile senkronizasyon
 
 #### PWA Yapılandırması
-- [ ] `manifest.json`
-  - [ ] name, short_name
-  - [ ] theme_color, background_color
-  - [ ] icons (192x192, 512x512)
-  - [ ] display: standalone
-  - [ ] start_url
-- [ ] `service-worker.js`
-  - [ ] Cache stratejisi (stale-while-revalidate)
-  - [ ] Offline fallback sayfası
-  - [ ] Asset caching
-- [ ] Next.js PWA plugin kurulumu
+- [x] `manifest.json`
+  - [x] name, short_name
+  - [x] theme_color, background_color
+  - [x] icons (192x192, 512x512)
+  - [x] display: standalone
+  - [x] start_url
+- [x] `service-worker.js`
+  - [x] Cache stratejisi (stale-while-revalidate)
+  - [x] Offline fallback sayfası
+  - [x] Asset caching
+- [x] Next.js PWA plugin kurulumu
 - [ ] Add to Home Screen (A2HS) prompt
 - [ ] Splash screen tasarımı
 
 #### Responsive Design Optimizasyonu
-- [ ] Mobile first (375px)
-- [ ] Tablet breakpoint (768px)
-- [ ] Touch hedefleri (min 44x44px)
+- [x] Mobile first (375px)
+- [x] Tablet breakpoint (768px)
+- [x] Touch hedefleri (min 44x44px)
 - [ ] Safe area insets (iPhone notch)
 - [ ] Landscape mode testing
 
 #### Accessibility (a11y)
-- [ ] Semantic HTML kullanımı
+- [x] Semantic HTML kullanımı
 - [ ] ARIA labels
 - [ ] Keyboard navigation
 - [ ] Focus management
-- [ ] Color contrast (WCAG AA)
+- [x] Color contrast (WCAG AA)
 - [ ] Screen reader testing
 
 #### Performance Optimizasyonu
-- [ ] Image optimization (next/image)
-- [ ] Font optimization
-- [ ] Code splitting
+- [x] Image optimization (next/image)
+- [x] Font optimization
+- [x] Code splitting
 - [ ] Bundle analyzer
 - [ ] Lighthouse audit (hedef: >90)
 
 **Çıktılar:**
-- [ ] Tam fonksiyonel müşteri arayüzü
+- [x] Tam fonksiyonel müşteri arayüzü
 - [ ] Lighthouse score >90
-- [ ] PWA kurulabilir (A2HS)
+- [x] PWA kurulabilir (A2HS)
 
 ---
 
