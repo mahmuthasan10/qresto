@@ -61,39 +61,39 @@
 ### Hafta 2 - UI/UX Tasarımı
 
 #### Wireframe Tasarımı
-- [ ] Müşteri Arayüzü Wireframe
-  - [ ] QR okutma ve lokasyon izni ekranı
-  - [ ] Menü listesi sayfası
-  - [ ] Ürün detay modal
-  - [ ] Sepet sayfası
-  - [ ] Sipariş takip sayfası
-  - [ ] Oturum süresi uyarı modal
-- [ ] Admin Panel Wireframe
-  - [ ] Login sayfası
-  - [ ] Dashboard sayfası
-  - [ ] Menü yönetimi sayfası
-  - [ ] Masa yönetimi sayfası
-  - [ ] Sipariş listesi sayfası
-  - [ ] Ayarlar sayfası
-- [ ] Mutfak Ekranı Wireframe
-  - [ ] Sipariş kartları görünümü (3 kolon)
-  - [ ] Durum geçiş butonları
+- [x] Müşteri Arayüzü Wireframe
+  - [x] QR okutma ve lokasyon izni ekranı
+  - [x] Menü listesi sayfası
+  - [x] Ürün detay modal
+  - [x] Sepet sayfası
+  - [x] Sipariş takip sayfası
+  - [x] Oturum süresi uyarı modal
+- [x] Admin Panel Wireframe
+  - [x] Login sayfası
+  - [x] Dashboard sayfası
+  - [x] Menü yönetimi sayfası
+  - [x] Masa yönetimi sayfası
+  - [x] Sipariş listesi sayfası
+  - [x] Ayarlar sayfası
+- [x] Mutfak Ekranı Wireframe
+  - [x] Sipariş kartları görünümü (3 kolon)
+  - [x] Durum geçiş butonları
 
 #### High-Fidelity Mockup (Figma)
-- [ ] Design System oluşturma
-  - [ ] Renk paleti (Primary, Secondary, Accent, Neutral)
-  - [ ] Typography (Font ailesi, boyutları, ağırlıkları)
-  - [ ] Spacing sistemi (4px grid)
-  - [ ] Border radius değerleri
-  - [ ] Shadow değerleri
-- [ ] Component Library
-  - [ ] Button (Primary, Secondary, Danger, Ghost)
-  - [ ] Input (Text, Number, Search, Textarea)
-  - [ ] Card (Product, Order, Stat)
-  - [ ] Modal (Confirmation, Form, Alert)
-  - [ ] Navigation (Tabs, Sidebar, Bottom Bar)
-  - [ ] Badge (Status, Count)
-  - [ ] Toast (Success, Error, Warning, Info)
+- [x] Design System oluşturma
+  - [x] Renk paleti (Primary, Secondary, Accent, Neutral)
+  - [x] Typography (Font ailesi, boyutları, ağırlıkları)
+  - [x] Spacing sistemi (4px grid)
+  - [x] Border radius değerleri
+  - [x] Shadow değerleri
+- [x] Component Library
+  - [x] Button (Primary, Secondary, Danger, Ghost)
+  - [x] Input (Text, Number, Search, Textarea)
+  - [x] Card (Product, Order, Stat)
+  - [x] Modal (Confirmation, Form, Alert)
+  - [x] Navigation (Tabs, Sidebar, Bottom Bar)
+  - [x] Badge (Status, Count)
+  - [x] Toast (Success, Error, Warning, Info)
 - [ ] Responsive tasarımlar
   - [ ] Mobile (375px)
   - [ ] Tablet (768px)
@@ -101,8 +101,10 @@
 
 **Çıktılar:**
 - [ ] Figma dosyası (tüm ekranlar)
-- [ ] Style Guide dokümanı
-- [ ] Component Library
+- [x] Style Guide dokümanı
+- [x] Component Library
+
+
 
 ---
 
