@@ -164,8 +164,9 @@ exports.createOrder = async (req, res, next) => {
             return res.status(403).json({ error: 'Geçersiz veya süresi dolmuş oturum' });
         }
 
-        // Verify location if provided
-        if (value.latitude && value.longitude) {
+        // Verify location if provided (skip in development)
+        const isDev = process.env.NODE_ENV === 'development';
+        if (value.latitude && value.longitude && !isDev) {
             const distance = calculateDistance(
                 value.latitude, value.longitude,
                 parseFloat(session.restaurant.latitude),

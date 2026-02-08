@@ -123,13 +123,13 @@
   - [x] `/src/utils`
   - [x] `/src/config`
   - [x] `/src/services`
-- [ ] Environment variables (.env)
-  - [ ] DATABASE_URL
-  - [ ] JWT_SECRET
-  - [ ] JWT_EXPIRES_IN
-  - [ ] CLOUDINARY_URL
-  - [ ] PORT
-  - [ ] NODE_ENV
+- [x] Environment variables (.env)
+  - [x] DATABASE_URL
+  - [x] JWT_SECRET
+  - [x] JWT_EXPIRES_IN
+  - [x] CLOUDINARY_URL
+  - [x] PORT
+  - [x] NODE_ENV
 - [x] Logger (Winston) kurulumu
 - [x] Error handler middleware
 - [x] CORS yapılandırması
@@ -137,87 +137,87 @@
 - [x] Rate limiting middleware
 
 #### Database Schema (Prisma)
-- [ ] `restaurants` tablosu
-  - [ ] id, name, slug, email, password_hash
-  - [ ] phone, address, latitude, longitude
-  - [ ] location_radius (default 50m)
-  - [ ] session_timeout (default 30 dakika)
-  - [ ] logo_url, is_active
-  - [ ] subscription_plan, subscription_expires_at
-  - [ ] created_at, updated_at
-  - [ ] İndeksler: email, slug, location
-- [ ] `categories` tablosu
-  - [ ] id, restaurant_id, name, name_en
-  - [ ] display_order, icon, is_active
-  - [ ] Unique constraint: restaurant_id + name
-- [ ] `menu_items` tablosu
-  - [ ] id, restaurant_id, category_id
-  - [ ] name, name_en, description, description_en
-  - [ ] price, image_url
-  - [ ] is_available, is_featured
-  - [ ] allergens (array), dietary_info (array)
-  - [ ] preparation_time, display_order
-- [ ] `tables` tablosu
-  - [ ] id, restaurant_id, table_number, table_name
-  - [ ] qr_code (unique), capacity, is_active
-  - [ ] Unique constraint: restaurant_id + table_number
-- [ ] `sessions` tablosu
-  - [ ] id, restaurant_id, table_id, session_token
-  - [ ] customer_latitude, customer_longitude
-  - [ ] device_info (JSON)
-  - [ ] started_at, expires_at, last_activity_at
-  - [ ] is_active
-- [ ] `orders` tablosu
-  - [ ] id, order_number (unique, format: ORD-YYYYMMDD-XXX)
-  - [ ] restaurant_id, table_id, session_id, table_number
-  - [ ] status (enum: pending, confirmed, preparing, ready, completed, cancelled)
-  - [ ] total_amount, payment_method
-  - [ ] customer_notes, customer_latitude, customer_longitude
-  - [ ] Timestamp'ler: confirmed_at, preparing_at, ready_at, completed_at, cancelled_at
-  - [ ] cancellation_reason
-- [ ] `order_items` tablosu
-  - [ ] id, order_id, menu_item_id
-  - [ ] item_name, quantity, unit_price, subtotal
-  - [ ] notes
-- [ ] Migration çalıştırma
+- [x] `restaurants` tablosu
+  - [x] id, name, slug, email, password_hash
+  - [x] phone, address, latitude, longitude
+  - [x] location_radius (default 50m)
+  - [x] session_timeout (default 30 dakika)
+  - [x] logo_url, is_active
+  - [x] subscription_plan, subscription_expires_at
+  - [x] created_at, updated_at
+  - [x] İndeksler: email, slug, location
+- [x] `categories` tablosu
+  - [x] id, restaurant_id, name, name_en
+  - [x] display_order, icon, is_active
+  - [x] Unique constraint: restaurant_id + name
+- [x] `menu_items` tablosu
+  - [x] id, restaurant_id, category_id
+  - [x] name, name_en, description, description_en
+  - [x] price, image_url
+  - [x] is_available, is_featured
+  - [x] allergens (array), dietary_info (array)
+  - [x] preparation_time, display_order
+- [x] `tables` tablosu
+  - [x] id, restaurant_id, table_number, table_name
+  - [x] qr_code (unique), capacity, is_active
+  - [x] Unique constraint: restaurant_id + table_number
+- [x] `sessions` tablosu
+  - [x] id, restaurant_id, table_id, session_token
+  - [x] customer_latitude, customer_longitude
+  - [x] device_info (JSON)
+  - [x] started_at, expires_at, last_activity_at
+  - [x] is_active
+- [x] `orders` tablosu
+  - [x] id, order_number (unique, format: ORD-YYYYMMDD-XXX)
+  - [x] restaurant_id, table_id, session_id, table_number
+  - [x] status (enum: pending, confirmed, preparing, ready, completed, cancelled)
+  - [x] total_amount, payment_method
+  - [x] customer_notes, customer_latitude, customer_longitude
+  - [x] Timestamp'ler: confirmed_at, preparing_at, ready_at, completed_at, cancelled_at
+  - [x] cancellation_reason
+- [x] `order_items` tablosu
+  - [x] id, order_id, menu_item_id
+  - [x] item_name, quantity, unit_price, subtotal
+  - [x] notes
+- [x] Migration çalıştırma
 
 #### Authentication API
-- [ ] POST `/api/v1/auth/register`
-  - [ ] Email validasyonu
-  - [ ] Şifre hashleme (bcrypt)
-  - [ ] Slug oluşturma
-  - [ ] JWT token döndürme
-- [ ] POST `/api/v1/auth/login`
-  - [ ] Email/şifre doğrulama
-  - [ ] JWT access token oluşturma
-  - [ ] Refresh token oluşturma
-- [ ] POST `/api/v1/auth/logout`
-  - [ ] Token invalidation
-- [ ] POST `/api/v1/auth/refresh-token`
-  - [ ] Refresh token ile yeni access token
-- [ ] POST `/api/v1/auth/forgot-password`
-  - [ ] Şifre sıfırlama maili gönderme
-- [ ] POST `/api/v1/auth/reset-password`
-  - [ ] Token ile şifre sıfırlama
-- [ ] Auth middleware (JWT verification)
+- [x] POST `/api/v1/auth/register`
+  - [x] Email validasyonu
+  - [x] Şifre hashleme (bcrypt)
+  - [x] Slug oluşturma
+  - [x] JWT token döndürme
+- [x] POST `/api/v1/auth/login`
+  - [x] Email/şifre doğrulama
+  - [x] JWT access token oluşturma
+  - [x] Refresh token oluşturma
+- [x] POST `/api/v1/auth/logout`
+  - [x] Token invalidation
+- [x] POST `/api/v1/auth/refresh-token`
+  - [x] Refresh token ile yeni access token
+- [x] POST `/api/v1/auth/forgot-password`
+  - [x] Şifre sıfırlama maili gönderme
+- [x] POST `/api/v1/auth/reset-password`
+  - [x] Token ile şifre sıfırlama
+- [x] Auth middleware (JWT verification)
 
 #### Restaurant CRUD API
-- [ ] GET `/api/v1/restaurant/profile`
-- [ ] PUT `/api/v1/restaurant/profile`
-- [ ] PATCH `/api/v1/restaurant/location`
-- [ ] PATCH `/api/v1/restaurant/settings`
-- [ ] GET `/api/v1/restaurant/stats`
-- [ ] GET `/api/v1/restaurant/stats/daily`
-- [ ] GET `/api/v1/restaurant/stats/weekly`
-- [ ] GET `/api/v1/restaurant/stats/monthly`
+- [x] GET `/api/v1/restaurant/profile`
+- [x] PUT `/api/v1/restaurant/profile`
+- [x] PATCH `/api/v1/restaurant/location`
+- [x] PATCH `/api/v1/restaurant/settings`
+- [x] GET `/api/v1/restaurant/stats`
+- [x] GET `/api/v1/restaurant/stats/daily`
+- [x] GET `/api/v1/restaurant/stats/weekly`
+- [x] GET `/api/v1/restaurant/stats/monthly`
 
 #### Category CRUD API
-- [ ] GET `/api/v1/categories`
-- [ ] POST `/api/v1/categories`
-- [ ] GET `/api/v1/categories/:id`
-- [ ] PUT `/api/v1/categories/:id`
-- [ ] DELETE `/api/v1/categories/:id`
-- [ ] PATCH `/api/v1/categories/reorder`
+- [x] GET `/api/v1/categories`
+- [x] POST `/api/v1/categories`
+- [x] GET `/api/v1/categories/:id`
+- [x] PUT `/api/v1/categories/:id`
+- [x] DELETE `/api/v1/categories/:id`
+- [x] PATCH `/api/v1/categories/reorder`
 
 #### Test Yazımı
 - [ ] Jest yapılandırması
@@ -225,64 +225,65 @@
 - [ ] Restaurant endpoint testleri
 - [ ] Category endpoint testleri
 
+
 ---
 
 ### Hafta 4 - API Geliştirme Tamamlama
 
 #### Menu Item CRUD API
-- [ ] GET `/api/v1/menu-items`
-  - [ ] Kategori filtresi
-  - [ ] Sadece aktif filtresi
-  - [ ] Sıralama (display_order)
-- [ ] POST `/api/v1/menu-items`
-  - [ ] Joi validasyonu
-  - [ ] Allergen/dietary info array
-- [ ] GET `/api/v1/menu-items/:id`
-- [ ] PUT `/api/v1/menu-items/:id`
-- [ ] DELETE `/api/v1/menu-items/:id`
-- [ ] PATCH `/api/v1/menu-items/:id/toggle-availability`
-- [ ] PATCH `/api/v1/menu-items/:id/toggle-featured`
-- [ ] POST `/api/v1/menu-items/:id/image`
-  - [ ] Multer dosya upload
-  - [ ] Sharp ile resim optimizasyonu
-  - [ ] Cloudinary'e yükleme
-- [ ] DELETE `/api/v1/menu-items/:id/image`
-- [ ] PATCH `/api/v1/menu-items/reorder`
+- [x] GET `/api/v1/menu-items`
+  - [x] Kategori filtresi
+  - [x] Sadece aktif filtresi
+  - [x] Sıralama (display_order)
+- [x] POST `/api/v1/menu-items`
+  - [x] Joi validasyonu
+  - [x] Allergen/dietary info array
+- [x] GET `/api/v1/menu-items/:id`
+- [x] PUT `/api/v1/menu-items/:id`
+- [x] DELETE `/api/v1/menu-items/:id`
+- [x] PATCH `/api/v1/menu-items/:id/toggle-availability`
+- [x] PATCH `/api/v1/menu-items/:id/toggle-featured`
+- [x] POST `/api/v1/menu-items/:id/image`
+  - [x] Multer dosya upload
+  - [x] Sharp ile resim optimizasyonu
+  - [x] Cloudinary'e yükleme
+- [x] DELETE `/api/v1/menu-items/:id/image`
+- [x] PATCH `/api/v1/menu-items/reorder`
 
 #### Table CRUD API
-- [ ] GET `/api/v1/tables`
-- [ ] POST `/api/v1/tables`
-  - [ ] QR code oluşturma (uuid + restaurant slug)
-- [ ] GET `/api/v1/tables/:id`
-- [ ] PUT `/api/v1/tables/:id`
-- [ ] DELETE `/api/v1/tables/:id`
-- [ ] GET `/api/v1/tables/:id/qr`
-  - [ ] QR kodu resim olarak döndürme
-- [ ] POST `/api/v1/tables/:id/qr/regenerate`
-- [ ] GET `/api/v1/tables/:id/active-session`
+- [x] GET `/api/v1/tables`
+- [x] POST `/api/v1/tables`
+  - [x] QR code oluşturma (uuid + restaurant slug)
+- [x] GET `/api/v1/tables/:id`
+- [x] PUT `/api/v1/tables/:id`
+- [x] DELETE `/api/v1/tables/:id`
+- [x] GET `/api/v1/tables/:id/qr`
+  - [x] QR kodu resim olarak döndürme
+- [x] POST `/api/v1/tables/:id/qr/regenerate`
+- [x] GET `/api/v1/tables/:id/active-session`
 
 #### Public Menu API (Müşteri için)
-- [ ] GET `/api/v1/public/menu/:tableQR`
-  - [ ] QR koddan masa ve restoran bilgisi
-  - [ ] Menü kategorileri + ürünler
-  - [ ] Restoran ayarları (lokasyon, radius)
-- [ ] GET `/api/v1/public/restaurant/:restaurantSlug`
+- [x] GET `/api/v1/public/menu/:tableQR`
+  - [x] QR koddan masa ve restoran bilgisi
+  - [x] Menü kategorileri + ürünler
+  - [x] Restoran ayarları (lokasyon, radius)
+- [x] GET `/api/v1/public/restaurant/:restaurantSlug`
 
 #### Session Management API
-- [ ] POST `/api/v1/sessions/start`
-  - [ ] Lokasyon doğrulama (Haversine formula)
-  - [ ] Session token oluşturma
-  - [ ] Expires_at hesaplama
-- [ ] GET `/api/v1/sessions/:token/verify`
-- [ ] PATCH `/api/v1/sessions/:token/extend`
-  - [ ] Aktiviteye göre süre uzatma
-- [ ] DELETE `/api/v1/sessions/:token`
+- [x] POST `/api/v1/sessions/start`
+  - [x] Lokasyon doğrulama (Haversine formula)
+  - [x] Session token oluşturma
+  - [x] Expires_at hesaplama
+- [x] GET `/api/v1/sessions/:token/verify`
+- [x] PATCH `/api/v1/sessions/:token/extend`
+  - [x] Aktiviteye göre süre uzatma
+- [x] DELETE `/api/v1/sessions/:token`
 
 #### Location Verification
-- [ ] POST `/api/v1/location/verify`
-  - [ ] Haversine formula implementasyonu
-  - [ ] Mesafe hesaplama
-  - [ ] Radius kontrolü
+- [x] POST `/api/v1/location/verify`
+  - [x] Haversine formula implementasyonu
+  - [x] Mesafe hesaplama
+  - [x] Radius kontrolü
 ```javascript
 // Haversine Formula Implementasyonu
 function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
@@ -302,41 +303,41 @@ function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
 ```
 
 #### Order API
-- [ ] POST `/api/v1/orders`
-  - [ ] Session doğrulama
-  - [ ] Sipariş numarası oluşturma (ORD-YYYYMMDD-XXX)
-  - [ ] Order items oluşturma
-  - [ ] Toplam hesaplama
-  - [ ] WebSocket event emit (new_order)
-- [ ] GET `/api/v1/orders`
-  - [ ] Filtreler: status, date range, table
-  - [ ] Pagination
-- [ ] GET `/api/v1/orders/:id`
-- [ ] PATCH `/api/v1/orders/:id/status`
-  - [ ] Status geçiş validasyonu
-  - [ ] Timestamp güncelleme
-  - [ ] WebSocket event emit (order_status_updated)
-- [ ] DELETE `/api/v1/orders/:id`
-  - [ ] İptal nedeni kaydetme
-- [ ] GET `/api/v1/orders/active`
-  - [ ] pending, confirmed, preparing, ready
-- [ ] GET `/api/v1/orders/history`
-  - [ ] completed, cancelled
+- [x] POST `/api/v1/orders`
+  - [x] Session doğrulama
+  - [x] Sipariş numarası oluşturma (ORD-YYYYMMDD-XXX)
+  - [x] Order items oluşturma
+  - [x] Toplam hesaplama
+  - [x] WebSocket event emit (new_order)
+- [x] GET `/api/v1/orders`
+  - [x] Filtreler: status, date range, table
+  - [x] Pagination
+- [x] GET `/api/v1/orders/:id`
+- [x] PATCH `/api/v1/orders/:id/status`
+  - [x] Status geçiş validasyonu
+  - [x] Timestamp güncelleme
+  - [x] WebSocket event emit (order_status_updated)
+- [x] DELETE `/api/v1/orders/:id`
+  - [x] İptal nedeni kaydetme
+- [x] GET `/api/v1/orders/active`
+  - [x] pending, confirmed, preparing, ready
+- [x] GET `/api/v1/orders/history`
+  - [x] completed, cancelled
 
 #### WebSocket Setup
-- [ ] Socket.io kurulumu
-- [ ] Restaurant room'ları
-  - [ ] `join_restaurant` eventi
-  - [ ] `leave_restaurant` eventi
-- [ ] Server → Client eventler
-  - [ ] `new_order` - Yeni sipariş bildirimi
-  - [ ] `order_status_updated` - Durum değişikliği
-  - [ ] `session_expired` - Oturum süresi doldu
-  - [ ] `menu_updated` - Menü güncellendi
-- [ ] Authentication (JWT token ile)
+- [x] Socket.io kurulumu
+- [x] Restaurant room'ları
+  - [x] `join_restaurant` eventi
+  - [x] `leave_restaurant` eventi
+- [x] Server → Client eventler
+  - [x] `new_order` - Yeni sipariş bildirimi
+  - [x] `order_status_updated` - Durum değişikliği
+  - [x] `session_expired` - Oturum süresi doldu
+  - [x] `menu_updated` - Menü güncellendi
+- [x] Authentication (JWT token ile)
 
 **Çıktılar:**
-- [ ] Tüm API endpoints çalışıyor
+- [x] Tüm API endpoints çalışıyor
 - [ ] Postman Collection oluşturuldu
 - [ ] API dokümantasyonu (Swagger/OpenAPI)
 - [ ] Unit test coverage >80%
@@ -357,106 +358,106 @@ function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
 - [x] Zod validasyon kurulumu
 
 #### Lokasyon İzni ve Doğrulama
-- [ ] Lokasyon izni modal komponenti
-  - [ ] İzin isteme butonu
-  - [ ] İzin açıklama metni
-  - [ ] İzin red durumu handling
-- [ ] Geolocation API kullanımı
-  - [ ] getCurrentPosition()
-  - [ ] Hata yönetimi (PERMISSION_DENIED, POSITION_UNAVAILABLE)
-- [ ] Lokasyon doğrulama API çağrısı
-- [ ] Mesafe hata modalı (>50m)
+- [x] Lokasyon izni modal komponenti
+  - [x] İzin isteme butonu
+  - [x] İzin açıklama metni
+  - [x] İzin red durumu handling
+- [x] Geolocation API kullanımı
+  - [x] getCurrentPosition()
+  - [x] Hata yönetimi (PERMISSION_DENIED, POSITION_UNAVAILABLE)
+- [x] Lokasyon doğrulama API çağrısı
+- [x] Mesafe hata modalı (>50m)
 - [ ] Manuel masa giriş alternatifi
 
 #### Public Menü Sayfası (`/menu/:tableQR`)
-- [ ] Route oluşturma
-- [ ] Loading skeleton
-- [ ] Header komponenti
-  - [ ] Restoran logosu
-  - [ ] Restoran adı
-  - [ ] Session timer (countdown)
-- [ ] Kategori tab navigasyonu
-  - [ ] Yatay scroll
-  - [ ] Aktif kategori highlight
-  - [ ] Sticky header
-- [ ] Ürün listesi
-  - [ ] Kategori bazlı gruplama
+- [x] Route oluşturma
+- [x] Loading skeleton
+- [x] Header komponenti
+  - [x] Restoran logosu
+  - [x] Restoran adı
+  - [x] Session timer (countdown)
+- [x] Kategori tab navigasyonu
+  - [x] Yatay scroll
+  - [x] Aktif kategori highlight
+  - [x] Sticky header
+- [x] Ürün listesi
+  - [x] Kategori bazlı gruplama
   - [ ] Lazy loading (infinite scroll)
   - [ ] Pull-to-refresh
-- [ ] Ürün kartı komponenti
-  - [ ] Ürün resmi (lazy load, placeholder)
-  - [ ] Ürün adı
-  - [ ] Açıklama (truncated)
-  - [ ] Fiyat
-  - [ ] Allergen ikonları
-  - [ ] Diyet bilgisi badge'leri
-  - [ ] "Sepete Ekle" butonu (+)
-- [ ] Ürün detay modal
-  - [ ] Büyük resim
-  - [ ] Tam açıklama
-  - [ ] Allergen listesi
-  - [ ] Miktar seçici
-  - [ ] Ürün notu textarea
-  - [ ] Sepete ekle butonu
-- [ ] Fixed bottom bar
-  - [ ] Sepet ikonu + badge
-  - [ ] Toplam tutar
+- [x] Ürün kartı komponenti
+  - [x] Ürün resmi (lazy load, placeholder)
+  - [x] Ürün adı
+  - [x] Açıklama (truncated)
+  - [x] Fiyat
+  - [x] Allergen ikonları
+  - [x] Diyet bilgisi badge'leri
+  - [x] "Sepete Ekle" butonu (+)
+- [x] Ürün detay modal
+  - [x] Büyük resim
+  - [x] Tam açıklama
+  - [x] Allergen listesi
+  - [x] Miktar seçici
+  - [x] Ürün notu textarea
+  - [x] Sepete ekle butonu
+- [x] Fixed bottom bar
+  - [x] Sepet ikonu + badge
+  - [x] Toplam tutar
 
 #### Sepet Sayfası (`/cart`)
-- [ ] Sepet store (Zustand)
-  - [ ] addItem action
-  - [ ] removeItem action
-  - [ ] updateQuantity action
-  - [ ] clearCart action
-  - [ ] Total hesaplama selector
-- [ ] Sepet UI
-  - [ ] Header (Geri butonu, "Sepetim")
-  - [ ] Boş sepet durumu
-  - [ ] Ürün listesi
-    - [ ] Ürün adı
-    - [ ] Miktar (+/- butonları)
-    - [ ] Birim fiyat
-    - [ ] Subtotal
-    - [ ] Silme butonu
-    - [ ] Ürün notu görüntüleme/düzenleme
-  - [ ] Sipariş notu textarea
-  - [ ] Ödeme seçimi
-    - [ ] Radio: "Nakit"
-    - [ ] Radio: "Kredi Kartı (Masada)"
-  - [ ] Toplam tutar (büyük)
-  - [ ] "Siparişi Gönder" butonu (sticky bottom)
-- [ ] Sipariş gönderme
-  - [ ] Form validasyonu
-  - [ ] API çağrısı
-  - [ ] Loading state
-  - [ ] Hata handling
-  - [ ] Başarı redirect
+- [x] Sepet store (Zustand)
+  - [x] addItem action
+  - [x] removeItem action
+  - [x] updateQuantity action
+  - [x] clearCart action
+  - [x] Total hesaplama selector
+- [x] Sepet UI
+  - [x] Header (Geri butonu, "Sepetim")
+  - [x] Boş sepet durumu
+  - [x] Ürün listesi
+    - [x] Ürün adı
+    - [x] Miktar (+/- butonları)
+    - [x] Birim fiyat
+    - [x] Subtotal
+    - [x] Silme butonu
+    - [x] Ürün notu görüntüleme/düzenleme
+  - [x] Sipariş notu textarea
+  - [x] Ödeme seçimi
+    - [x] Radio: "Nakit"
+    - [x] Radio: "Kredi Kartı (Masada)"
+  - [x] Toplam tutar (büyük)
+  - [x] "Siparişi Gönder" butonu (sticky bottom)
+- [x] Sipariş gönderme
+  - [x] Form validasyonu
+  - [x] API çağrısı
+  - [x] Loading state
+  - [x] Hata handling
+  - [x] Başarı redirect
 
 #### Sipariş Takip Sayfası (`/order/:orderId`)
-- [ ] Route oluşturma
-- [ ] Durum göstergesi (stepper)
-  - [ ] ✓ Sipariş alındı
-  - [ ] ⏳ Onaylandı
-  - [ ] ⏳ Hazırlanıyor
-  - [ ] ⏳ Hazır
-  - [ ] ⏳ Tamamlandı
-- [ ] Sipariş detayları
-  - [ ] Sipariş numarası
-  - [ ] Masa numarası
-  - [ ] Sipariş zamanı
-  - [ ] Ürün listesi
-  - [ ] Toplam tutar
-- [ ] Real-time güncelleme (WebSocket)
-  - [ ] `order_status_updated` dinleme
-  - [ ] UI güncelleme
-- [ ] "Yeni Sipariş Ver" butonu
+- [x] Route oluşturma
+- [x] Durum göstergesi (stepper)
+  - [x] ✓ Sipariş alındı
+  - [x] ⏳ Onaylandı
+  - [x] ⏳ Hazırlanıyor
+  - [x] ⏳ Hazır
+  - [x] ⏳ Tamamlandı
+- [x] Sipariş detayları
+  - [x] Sipariş numarası
+  - [x] Masa numarası
+  - [x] Sipariş zamanı
+  - [x] Ürün listesi
+  - [x] Toplam tutar
+- [x] Real-time güncelleme (WebSocket)
+  - [x] `order_status_updated` dinleme
+  - [x] UI güncelleme
+- [x] "Yeni Sipariş Ver" butonu
 
 #### WebSocket Entegrasyonu
-- [ ] Socket context/provider
-- [ ] Bağlantı yönetimi
-- [ ] Event listeners
-- [ ] Reconnection logic
-- [ ] Session expired handling
+- [x] Socket context/provider
+- [x] Bağlantı yönetimi
+- [x] Event listeners
+- [x] Reconnection logic
+- [x] Session expired handling
 
 ---
 

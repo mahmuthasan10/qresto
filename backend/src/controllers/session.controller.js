@@ -61,6 +61,9 @@ exports.start = async (req, res, next) => {
         let locationVerified = false;
         let distance = null;
 
+        // DEV MODE: Skip location check for testing
+        const isDev = process.env.NODE_ENV === 'development';
+
         if (latitude && longitude) {
             distance = calculateDistance(
                 parseFloat(latitude),
@@ -71,13 +74,22 @@ exports.start = async (req, res, next) => {
 
             locationVerified = distance <= table.restaurant.locationRadius;
 
-            if (!locationVerified) {
+            // In development, allow bypass if location fails
+            if (!locationVerified && !isDev) {
                 return res.status(403).json({
                     error: 'Bu QR kod sadece restoran içinde kullanılabilir',
                     distance: Math.round(distance),
                     maxDistance: table.restaurant.locationRadius
                 });
             }
+
+            // DEV: Force verified in development
+            if (isDev) {
+                locationVerified = true;
+            }
+        } else if (isDev) {
+            // DEV: If no location provided in dev, still allow
+            locationVerified = true;
         }
 
         // Close any existing active sessions for this table
