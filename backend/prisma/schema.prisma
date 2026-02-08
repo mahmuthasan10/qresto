@@ -1,0 +1,201 @@
+// This is your Prisma schema file for QResto
+// Learn more: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== RESTAURANTS ====================
+model Restaurant {
+  id                 Int       @id @default(autoincrement())
+  name               String    @db.VarChar(255)
+  slug               String    @unique @db.VarChar(255)
+  email              String    @unique @db.VarChar(255)
+  passwordHash       String    @map("password_hash") @db.VarChar(255)
+  phone              String?   @db.VarChar(20)
+  address            String?   @db.Text
+  latitude           Decimal   @db.Decimal(10, 8)
+  longitude          Decimal   @db.Decimal(11, 8)
+  locationRadius     Int       @default(50) @map("location_radius") // metre
+  sessionTimeout     Int       @default(30) @map("session_timeout") // dakika
+  logoUrl            String?   @map("logo_url") @db.VarChar(500)
+  isActive           Boolean   @default(true) @map("is_active")
+  subscriptionPlan   String    @default("starter") @map("subscription_plan") @db.VarChar(50)
+  subscriptionExpiresAt DateTime? @map("subscription_expires_at")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  categories  Category[]
+  menuItems   MenuItem[]
+  tables      Table[]
+  orders      Order[]
+  sessions    Session[]
+
+  @@index([email])
+  @@index([slug])
+  @@index([latitude, longitude])
+  @@map("restaurants")
+}
+
+// ==================== CATEGORIES ====================
+model Category {
+  id           Int       @id @default(autoincrement())
+  restaurantId Int       @map("restaurant_id")
+  name         String    @db.VarChar(100)
+  nameEn       String?   @map("name_en") @db.VarChar(100)
+  displayOrder Int       @default(0) @map("display_order")
+  icon         String?   @db.VarChar(50)
+  isActive     Boolean   @default(true) @map("is_active")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  menuItems  MenuItem[]
+
+  @@unique([restaurantId, name])
+  @@index([restaurantId])
+  @@map("categories")
+}
+
+// ==================== MENU ITEMS ====================
+model MenuItem {
+  id              Int       @id @default(autoincrement())
+  restaurantId    Int       @map("restaurant_id")
+  categoryId      Int?      @map("category_id")
+  name            String    @db.VarChar(255)
+  nameEn          String?   @map("name_en") @db.VarChar(255)
+  description     String?   @db.Text
+  descriptionEn   String?   @map("description_en") @db.Text
+  price           Decimal   @db.Decimal(10, 2)
+  imageUrl        String?   @map("image_url") @db.VarChar(500)
+  isAvailable     Boolean   @default(true) @map("is_available")
+  isFeatured      Boolean   @default(false) @map("is_featured")
+  allergens       String[]  @default([])
+  dietaryInfo     String[]  @default([]) @map("dietary_info")
+  preparationTime Int?      @map("preparation_time") // dakika
+  displayOrder    Int       @default(0) @map("display_order")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  restaurant Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  category   Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  orderItems OrderItem[]
+
+  @@index([restaurantId])
+  @@index([categoryId])
+  @@index([isAvailable])
+  @@map("menu_items")
+}
+
+// ==================== TABLES ====================
+model Table {
+  id           Int       @id @default(autoincrement())
+  restaurantId Int       @map("restaurant_id")
+  tableNumber  String    @map("table_number") @db.VarChar(20)
+  tableName    String?   @map("table_name") @db.VarChar(100)
+  qrCode       String    @unique @map("qr_code") @db.VarChar(500)
+  capacity     Int?
+  isActive     Boolean   @default(true) @map("is_active")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  sessions   Session[]
+  orders     Order[]
+
+  @@unique([restaurantId, tableNumber])
+  @@index([restaurantId])
+  @@index([qrCode])
+  @@map("tables")
+}
+
+// ==================== SESSIONS ====================
+model Session {
+  id               Int       @id @default(autoincrement())
+  restaurantId     Int       @map("restaurant_id")
+  tableId          Int       @map("table_id")
+  sessionToken     String    @unique @map("session_token") @db.VarChar(500)
+  customerLatitude  Decimal?  @map("customer_latitude") @db.Decimal(10, 8)
+  customerLongitude Decimal?  @map("customer_longitude") @db.Decimal(11, 8)
+  deviceInfo       Json?     @map("device_info")
+  startedAt        DateTime  @default(now()) @map("started_at")
+  expiresAt        DateTime  @map("expires_at")
+  lastActivityAt   DateTime  @default(now()) @map("last_activity_at")
+  isActive         Boolean   @default(true) @map("is_active")
+
+  // Relations
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  table      Table      @relation(fields: [tableId], references: [id], onDelete: Cascade)
+  orders     Order[]
+
+  @@index([sessionToken])
+  @@index([tableId])
+  @@index([isActive])
+  @@map("sessions")
+}
+
+// ==================== ORDERS ====================
+model Order {
+  id               Int       @id @default(autoincrement())
+  orderNumber      String    @unique @map("order_number") @db.VarChar(20)
+  restaurantId     Int       @map("restaurant_id")
+  tableId          Int?      @map("table_id")
+  sessionId        Int?      @map("session_id")
+  tableNumber      String    @map("table_number") @db.VarChar(20)
+  status           String    @default("pending") @db.VarChar(50) // pending, confirmed, preparing, ready, completed, cancelled
+  totalAmount      Decimal   @map("total_amount") @db.Decimal(10, 2)
+  paymentMethod    String?   @map("payment_method") @db.VarChar(50) // cash, card_at_table
+  customerNotes    String?   @map("customer_notes") @db.Text
+  customerLatitude  Decimal?  @map("customer_latitude") @db.Decimal(10, 8)
+  customerLongitude Decimal?  @map("customer_longitude") @db.Decimal(11, 8)
+  confirmedAt      DateTime? @map("confirmed_at")
+  preparingAt      DateTime? @map("preparing_at")
+  readyAt          DateTime? @map("ready_at")
+  completedAt      DateTime? @map("completed_at")
+  cancelledAt      DateTime? @map("cancelled_at")
+  cancellationReason String? @map("cancellation_reason") @db.Text
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  restaurant Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  table      Table?      @relation(fields: [tableId], references: [id], onDelete: SetNull)
+  session    Session?    @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  orderItems OrderItem[]
+
+  @@index([restaurantId])
+  @@index([tableId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([orderNumber])
+  @@map("orders")
+}
+
+// ==================== ORDER ITEMS ====================
+model OrderItem {
+  id         Int      @id @default(autoincrement())
+  orderId    Int      @map("order_id")
+  menuItemId Int?     @map("menu_item_id")
+  itemName   String   @map("item_name") @db.VarChar(255)
+  quantity   Int
+  unitPrice  Decimal  @map("unit_price") @db.Decimal(10, 2)
+  subtotal   Decimal  @db.Decimal(10, 2)
+  notes      String?  @db.Text
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  // Relations
+  order    Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItem MenuItem? @relation(fields: [menuItemId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+  @@index([menuItemId])
+  @@map("order_items")
+}
