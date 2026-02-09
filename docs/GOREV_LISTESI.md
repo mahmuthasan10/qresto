@@ -517,166 +517,166 @@ function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
 ## 📅 HAFTA 7: FRONTEND - ADMİN PANELİ
 
 #### Admin Authentication
-- [ ] Login sayfası (`/admin/login`)
-  - [ ] Email input
-  - [ ] Password input
-  - [ ] Giriş yap butonu
-  - [ ] Şifremi unuttum linki
-  - [ ] Form validasyonu (Zod)
-  - [ ] Error toast
-- [ ] Auth store (Zustand)
-  - [ ] token storage
-  - [ ] user info
-  - [ ] login/logout actions
-- [ ] Protected route middleware
-- [ ] Token refresh logic
-- [ ] Logout functionality
+- [x] Login sayfası (`/admin/login`)
+  - [x] Email input
+  - [x] Password input
+  - [x] Giriş yap butonu
+  - [x] Şifremi unuttum linki
+  - [x] Form validasyonu (Zod)
+  - [x] Error toast
+- [x] Auth store (Zustand)
+  - [x] token storage
+  - [x] user info
+  - [x] login/logout actions
+- [x] Protected route middleware
+- [x] Token refresh logic
+- [x] Logout functionality
 
 #### Dashboard Sayfası (`/admin/dashboard`)
-- [ ] Layout (Sidebar + Content)
-  - [ ] Desktop: Fixed sidebar
-  - [ ] Mobile: Hamburger menu
-- [ ] Sidebar navigasyonu
-  - [ ] Dashboard
-  - [ ] Siparişler
-  - [ ] Menü
-  - [ ] Masalar
-  - [ ] Raporlar
-  - [ ] Ayarlar
-- [ ] Üst bar
-  - [ ] Restoran adı
-  - [ ] Bildirim ikonu + badge
-  - [ ] Profil dropdown
-- [ ] İstatistik kartları
-  - [ ] Bugünkü sipariş sayısı
-  - [ ] Bugünkü toplam gelir
-  - [ ] Aktif masa sayısı
-  - [ ] Ortalama sipariş değeri
-- [ ] Aktif siparişler listesi (real-time)
-  - [ ] Sipariş kartları
-  - [ ] Hızlı durum güncelleme
+- [x] Layout (Sidebar + Content)
+  - [x] Desktop: Fixed sidebar
+  - [x] Mobile: Hamburger menu
+- [x] Sidebar navigasyonu
+  - [x] Dashboard
+  - [x] Siparişler
+  - [x] Menü
+  - [x] Masalar
+  - [x] Ayarlar
+- [x] Üst bar
+  - [x] Restoran adı
+  - [x] Bildirim ikonu + badge
+  - [x] Profil dropdown
+- [x] İstatistik kartları
+  - [x] Bugünkü sipariş sayısı
+  - [x] Bugünkü toplam gelir
+  - [x] Aktif masa sayısı
+  - [x] Ortalama sipariş değeri
+- [x] Aktif siparişler listesi (real-time)
+  - [x] Sipariş kartları
+  - [x] Hızlı durum güncelleme
 - [ ] Grafikler (opsiyonel)
   - [ ] Saatlik sipariş dağılımı
   - [ ] Popüler ürünler
 
 #### Menü Yönetimi Sayfası (`/admin/menu`)
-- [ ] Kategori yönetimi
-  - [ ] Kategori listesi (accordion)
-  - [ ] Kategori ekleme modal
-  - [ ] Kategori düzenleme
-  - [ ] Kategori silme (confirmation)
+- [x] Kategori yönetimi
+  - [x] Kategori listesi (accordion)
+  - [x] Kategori ekleme modal
+  - [x] Kategori düzenleme
+  - [x] Kategori silme (confirmation)
   - [ ] Drag-drop sıralama
-- [ ] Ürün yönetimi
-  - [ ] Ürün listesi (grid/list toggle)
-  - [ ] Ürün kartı
-    - [ ] Resim thumbnail
-    - [ ] İsim
-    - [ ] Fiyat
-    - [ ] Aktif/Pasif toggle
-    - [ ] Düzenle/Sil butonları
-  - [ ] Ürün ekleme/düzenleme modal
+- [x] Ürün yönetimi
+  - [x] Ürün listesi (grid/list toggle)
+  - [x] Ürün kartı
+    - [x] Resim thumbnail
+    - [x] İsim
+    - [x] Fiyat
+    - [x] Aktif/Pasif toggle
+    - [x] Düzenle/Sil butonları
+  - [x] Ürün ekleme/düzenleme modal
     - [ ] Resim upload (react-dropzone)
     - [ ] Resim önizleme
-    - [ ] İsim (TR + EN)
-    - [ ] Açıklama (TR + EN)
-    - [ ] Kategori seçimi (dropdown)
-    - [ ] Fiyat input
+    - [x] İsim (TR + EN)
+    - [x] Açıklama (TR + EN)
+    - [x] Kategori seçimi (dropdown)
+    - [x] Fiyat input
     - [ ] Allergenler (multi-select chips)
     - [ ] Diyet bilgisi (multi-select chips)
-    - [ ] Hazırlama süresi (dakika)
-    - [ ] Aktif toggle
-    - [ ] Kaydet/İptal butonları
-  - [ ] Ürün silme (confirmation)
+    - [x] Hazırlama süresi (dakika)
+    - [x] Aktif toggle
+    - [x] Kaydet/İptal butonları
+  - [x] Ürün silme (confirmation)
   - [ ] Drag-drop sıralama (kategoriler arası)
 - [ ] Toplu işlemler
   - [ ] Seçili ürünleri pasife al
   - [ ] Seçili ürünleri sil
 
 #### Masa Yönetimi Sayfası (`/admin/tables`)
-- [ ] Masa listesi (grid view)
-  - [ ] Masa kartı
-    - [ ] Masa numarası
-    - [ ] Masa adı
-    - [ ] Kapasite
-    - [ ] QR önizleme
-    - [ ] Aktif/Pasif badge
-    - [ ] Aksiyon butonları
-- [ ] Masa ekleme modal
-  - [ ] Masa numarası
-  - [ ] Masa adı (opsiyonel)
-  - [ ] Kapasite
-- [ ] Masa düzenleme
-- [ ] Masa silme (confirmation)
-- [ ] QR kod işlemleri
-  - [ ] QR görüntüleme (büyük modal)
-  - [ ] QR indirme (PNG/SVG)
+- [x] Masa listesi (grid view)
+  - [x] Masa kartı
+    - [x] Masa numarası
+    - [x] Masa adı
+    - [x] Kapasite
+    - [x] QR önizleme
+    - [x] Aktif/Pasif badge
+    - [x] Aksiyon butonları
+- [x] Masa ekleme modal
+  - [x] Masa numarası
+  - [x] Masa adı (opsiyonel)
+  - [x] Kapasite
+- [x] Masa düzenleme
+- [x] Masa silme (confirmation)
+- [x] QR kod işlemleri
+  - [x] QR görüntüleme (büyük modal)
+  - [x] QR indirme (PNG/SVG)
   - [ ] QR yazdırma (print dialog)
-  - [ ] QR yenileme (regenerate)
+  - [x] QR yenileme (regenerate)
 - [ ] Toplu QR indirme (ZIP)
 
 #### Sipariş Yönetimi Sayfası (`/admin/orders`)
-- [ ] Filtreler
-  - [ ] Durum (Tümü, Bekleyen, Onaylanan, Hazırlanan, Hazır, Tamamlanan, İptal)
+- [x] Filtreler
+  - [x] Durum (Tümü, Bekleyen, Onaylanan, Hazırlanan, Hazır, Tamamlanan, İptal)
   - [ ] Tarih aralığı (date picker)
-  - [ ] Masa seçimi
-  - [ ] Arama (sipariş no)
-- [ ] Sipariş listesi (tablo)
-  - [ ] Sipariş no
-  - [ ] Masa
-  - [ ] Ürünler (truncated)
-  - [ ] Tutar
-  - [ ] Durum badge
-  - [ ] Zaman (relative)
-  - [ ] Aksiyonlar
-- [ ] Sipariş detay modal
-  - [ ] Sipariş bilgileri
-  - [ ] Ürün listesi (miktar, not)
-  - [ ] Müşteri notu
+  - [x] Masa seçimi
+  - [x] Arama (sipariş no)
+- [x] Sipariş listesi (tablo)
+  - [x] Sipariş no
+  - [x] Masa
+  - [x] Ürünler (truncated)
+  - [x] Tutar
+  - [x] Durum badge
+  - [x] Zaman (relative)
+  - [x] Aksiyonlar
+- [x] Sipariş detay modal
+  - [x] Sipariş bilgileri
+  - [x] Ürün listesi (miktar, not)
+  - [x] Müşteri notu
   - [ ] Durum geçmişi
-  - [ ] Durum güncelleme butonları
-- [ ] İptal işlemi
-  - [ ] İptal nedeni (dropdown/textarea)
-  - [ ] Confirmation
-- [ ] Pagination
-- [ ] Real-time güncelleme (WebSocket)
+  - [x] Durum güncelleme butonları
+- [x] İptal işlemi
+  - [x] İptal nedeni (dropdown/textarea)
+  - [x] Confirmation
+- [x] Pagination
+- [x] Real-time güncelleme (WebSocket)
 
 #### Ayarlar Sayfası (`/admin/settings`)
-- [ ] Tab yapısı
-- [ ] Genel Bilgiler tab'ı
-  - [ ] Restoran adı
-  - [ ] Email (readonly)
-  - [ ] Telefon
-  - [ ] Adres
+- [x] Tab yapısı
+- [x] Genel Bilgiler tab'ı
+  - [x] Restoran adı
+  - [x] Email (readonly)
+  - [x] Telefon
+  - [x] Adres
   - [ ] Logo upload
-- [ ] Lokasyon tab'ı
+- [x] Lokasyon tab'ı
   - [ ] Harita görüntüleme (Google Maps/Leaflet)
   - [ ] Haritadan konum seçme
-  - [ ] Enlem/Boylam input
-  - [ ] Yarıçap slider (10-200m)
+  - [x] Enlem/Boylam input
+  - [x] Yarıçap slider (10-200m)
   - [ ] Yarıçap görselleştirme (haritada daire)
-- [ ] Oturum Ayarları tab'ı
-  - [ ] Oturum süresi (input, dakika)
+- [x] Oturum Ayarları tab'ı
+  - [x] Oturum süresi (input, dakika)
   - [ ] Uyarı süresi (5 dakika kala)
-- [ ] Güvenlik tab'ı
-  - [ ] Şifre değiştirme formu
-  - [ ] Mevcut şifre
-  - [ ] Yeni şifre
-  - [ ] Şifre tekrar
+- [x] Güvenlik tab'ı
+  - [x] Şifre değiştirme formu
+  - [x] Mevcut şifre
+  - [x] Yeni şifre
+  - [x] Şifre tekrar
 - [ ] Abonelik tab'ı (Faz 2)
   - [ ] Mevcut plan
   - [ ] Kullanım istatistikleri
   - [ ] Plan yükseltme (disabled)
-- [ ] Kaydet butonu (form bazlı)
+- [x] Kaydet butonu (form bazlı)
 
 #### Responsive Design
-- [ ] Mobile sidebar (drawer)
-- [ ] Responsive tablolar
-- [ ] Touch-friendly inputs
-- [ ] Tablet optimizasyonu
+- [x] Mobile sidebar (drawer)
+- [x] Responsive tablolar
+- [x] Touch-friendly inputs
+- [x] Tablet optimizasyonu
 
 **Çıktılar:**
-- [ ] Tam fonksiyonel admin paneli
+- [x] Tam fonksiyonel admin paneli
 - [ ] Role-based access control (hazır)
+
 
 ---
 

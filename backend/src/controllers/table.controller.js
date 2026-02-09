@@ -3,10 +3,14 @@ const Joi = require('joi');
 const { v4: uuidv4 } = require('uuid');
 
 const tableSchema = Joi.object({
-    tableNumber: Joi.string().min(1).max(20).required(),
+    tableNumber: Joi.alternatives().try(
+        Joi.number().integer().min(1),
+        Joi.string().min(1).max(20)
+    ).required(),
     tableName: Joi.string().max(100).optional().allow(''),
     capacity: Joi.number().integer().min(1).optional().allow(null)
 });
+
 
 const generateQRCode = (restaurantId, tableId) => {
     return `qr_${restaurantId}_${tableId}_${uuidv4().slice(0, 8)}`;
@@ -39,6 +43,9 @@ exports.create = async (req, res, next) => {
             throw error;
         }
 
+        // Ensure tableNumber is a string
+        value.tableNumber = String(value.tableNumber);
+
         // Generate unique QR code
         const tempId = Date.now();
         const qrCode = generateQRCode(req.restaurantId, tempId);
@@ -62,6 +69,7 @@ exports.create = async (req, res, next) => {
         next(error);
     }
 };
+
 
 exports.getById = async (req, res, next) => {
     try {
@@ -92,6 +100,11 @@ exports.update = async (req, res, next) => {
         if (error) {
             error.isJoi = true;
             throw error;
+        }
+
+        // Ensure tableNumber is a string
+        if (value.tableNumber) {
+            value.tableNumber = String(value.tableNumber);
         }
 
         const result = await prisma.table.updateMany({

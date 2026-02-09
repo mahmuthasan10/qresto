@@ -1,81 +1,113 @@
 'use client';
 
 import { io, Socket } from 'socket.io-client';
+import { useEffect, useState } from 'react';
+import { useAuthStore } from '@/stores/authStore';
 
 const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001';
 
+let socket: Socket | null = null;
+
+function getSocket(): Socket {
+    if (!socket) {
+        socket = io(SOCKET_URL, {
+            autoConnect: false,
+            reconnection: true,
+            reconnectionAttempts: 5,
+            reconnectionDelay: 1000,
+        });
+    }
+    return socket;
+}
+
 class SocketService {
-    private socket: Socket | null = null;
     private restaurantId: number | null = null;
 
     connect(): Socket {
-        if (!this.socket) {
-            this.socket = io(SOCKET_URL, {
-                autoConnect: true,
-                reconnection: true,
-                reconnectionAttempts: 5,
-                reconnectionDelay: 1000,
-            });
+        const s = getSocket();
+        if (!s.connected) {
+            s.connect();
 
-            this.socket.on('connect', () => {
-                console.log('Socket connected:', this.socket?.id);
+            s.on('connect', () => {
+                console.log('Socket connected:', s.id);
                 if (this.restaurantId) {
                     this.joinRestaurant(this.restaurantId);
                 }
             });
 
-            this.socket.on('disconnect', () => {
+            s.on('disconnect', () => {
                 console.log('Socket disconnected');
             });
 
-            this.socket.on('connect_error', (error) => {
+            s.on('connect_error', (error) => {
                 console.error('Socket connection error:', error);
             });
         }
 
-        return this.socket;
+        return s;
     }
 
     disconnect(): void {
-        if (this.socket) {
-            this.socket.disconnect();
-            this.socket = null;
+        if (socket) {
+            socket.disconnect();
+            socket = null;
         }
     }
 
     joinRestaurant(restaurantId: number): void {
         this.restaurantId = restaurantId;
-        if (this.socket?.connected) {
-            this.socket.emit('join_restaurant', restaurantId);
+        if (socket?.connected) {
+            socket.emit('join_restaurant', restaurantId);
         }
     }
 
     leaveRestaurant(restaurantId: number): void {
-        if (this.socket?.connected) {
-            this.socket.emit('leave_restaurant', restaurantId);
+        if (socket?.connected) {
+            socket.emit('leave_restaurant', restaurantId);
         }
         this.restaurantId = null;
     }
 
     onNewOrder(callback: (data: any) => void): void {
-        this.socket?.on('new_order', callback);
+        socket?.on('new_order', callback);
     }
 
     onOrderStatusUpdated(callback: (data: any) => void): void {
-        this.socket?.on('order_status_updated', callback);
+        socket?.on('order_status_updated', callback);
     }
 
     onMenuUpdated(callback: (data: any) => void): void {
-        this.socket?.on('menu_updated', callback);
+        socket?.on('menu_updated', callback);
     }
 
     onSessionExpired(callback: (data: any) => void): void {
-        this.socket?.on('session_expired', callback);
+        socket?.on('session_expired', callback);
     }
 
     removeAllListeners(): void {
-        this.socket?.removeAllListeners();
+        socket?.removeAllListeners();
     }
 }
 
 export const socketService = new SocketService();
+
+// React hook for socket access
+export function useSocket(): Socket | null {
+    const [socketInstance, setSocketInstance] = useState<Socket | null>(null);
+    const { restaurant, isAuthenticated } = useAuthStore();
+
+    useEffect(() => {
+        if (isAuthenticated && restaurant?.id) {
+            const s = socketService.connect();
+            socketService.joinRestaurant(restaurant.id);
+            setSocketInstance(s);
+
+            return () => {
+                socketService.leaveRestaurant(restaurant.id);
+            };
+        }
+    }, [isAuthenticated, restaurant?.id]);
+
+    return socketInstance;
+}
+
