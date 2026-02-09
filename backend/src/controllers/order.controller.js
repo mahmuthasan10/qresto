@@ -67,6 +67,33 @@ exports.getActive = async (req, res, next) => {
     }
 };
 
+exports.getKitchen = async (req, res, next) => {
+    try {
+        const orders = await prisma.order.findMany({
+            where: {
+                restaurantId: req.restaurantId,
+                status: { in: ['pending', 'confirmed', 'preparing', 'ready'] }
+            },
+            include: {
+                orderItems: {
+                    select: {
+                        id: true,
+                        itemName: true,
+                        quantity: true,
+                        notes: true
+                    }
+                }
+            },
+            orderBy: { createdAt: 'asc' }
+        });
+
+        res.json({ orders });
+    } catch (error) {
+        next(error);
+    }
+};
+
+
 exports.getHistory = async (req, res, next) => {
     try {
         const { startDate, endDate, page = 1, limit = 50 } = req.query;

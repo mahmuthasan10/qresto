@@ -11,8 +11,12 @@ router.get('/', orderController.getAll);
 // GET /api/v1/orders/active
 router.get('/active', orderController.getActive);
 
+// GET /api/v1/orders/kitchen
+router.get('/kitchen', orderController.getKitchen);
+
 // GET /api/v1/orders/history
 router.get('/history', orderController.getHistory);
+
 
 // POST /api/v1/orders
 router.post('/', orderController.create);

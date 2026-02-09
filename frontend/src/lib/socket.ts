@@ -1,20 +1,24 @@
 'use client';
 
 import { io, Socket } from 'socket.io-client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAuthStore } from '@/stores/authStore';
 
 const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001';
 
 let socket: Socket | null = null;
 
+export type ConnectionStatus = 'connected' | 'connecting' | 'disconnected' | 'error';
+
 function getSocket(): Socket {
     if (!socket) {
         socket = io(SOCKET_URL, {
             autoConnect: false,
             reconnection: true,
-            reconnectionAttempts: 5,
+            reconnectionAttempts: 10,
             reconnectionDelay: 1000,
+            reconnectionDelayMax: 5000,
+            timeout: 20000,
         });
     }
     return socket;
@@ -22,26 +26,48 @@ function getSocket(): Socket {
 
 class SocketService {
     private restaurantId: number | null = null;
+    private statusListeners: Set<(status: ConnectionStatus) => void> = new Set();
 
     connect(): Socket {
         const s = getSocket();
         if (!s.connected) {
+            this.notifyStatus('connecting');
             s.connect();
 
             s.on('connect', () => {
                 console.log('Socket connected:', s.id);
+                this.notifyStatus('connected');
                 if (this.restaurantId) {
                     this.joinRestaurant(this.restaurantId);
                 }
             });
 
-            s.on('disconnect', () => {
-                console.log('Socket disconnected');
+            s.on('disconnect', (reason) => {
+                console.log('Socket disconnected:', reason);
+                this.notifyStatus('disconnected');
             });
 
             s.on('connect_error', (error) => {
                 console.error('Socket connection error:', error);
+                this.notifyStatus('error');
             });
+
+            s.on('reconnect', (attemptNumber) => {
+                console.log('Socket reconnected after', attemptNumber, 'attempts');
+                this.notifyStatus('connected');
+            });
+
+            s.on('reconnect_attempt', (attemptNumber) => {
+                console.log('Reconnection attempt:', attemptNumber);
+                this.notifyStatus('connecting');
+            });
+
+            // Heartbeat/ping every 25 seconds
+            setInterval(() => {
+                if (s.connected) {
+                    s.emit('ping');
+                }
+            }, 25000);
         }
 
         return s;
@@ -51,6 +77,7 @@ class SocketService {
         if (socket) {
             socket.disconnect();
             socket = null;
+            this.notifyStatus('disconnected');
         }
     }
 
@@ -66,6 +93,22 @@ class SocketService {
             socket.emit('leave_restaurant', restaurantId);
         }
         this.restaurantId = null;
+    }
+
+    // Status listener management
+    onStatusChange(callback: (status: ConnectionStatus) => void): () => void {
+        this.statusListeners.add(callback);
+        return () => this.statusListeners.delete(callback);
+    }
+
+    private notifyStatus(status: ConnectionStatus): void {
+        this.statusListeners.forEach(listener => listener(status));
+    }
+
+    getStatus(): ConnectionStatus {
+        if (!socket) return 'disconnected';
+        if (socket.connected) return 'connected';
+        return 'disconnected';
     }
 
     onNewOrder(callback: (data: any) => void): void {
@@ -91,7 +134,7 @@ class SocketService {
 
 export const socketService = new SocketService();
 
-// React hook for socket access
+// React hook for socket access with connection status
 export function useSocket(): Socket | null {
     const [socketInstance, setSocketInstance] = useState<Socket | null>(null);
     const { restaurant, isAuthenticated } = useAuthStore();
@@ -111,3 +154,14 @@ export function useSocket(): Socket | null {
     return socketInstance;
 }
 
+// Hook for connection status
+export function useSocketStatus(): ConnectionStatus {
+    const [status, setStatus] = useState<ConnectionStatus>(socketService.getStatus());
+
+    useEffect(() => {
+        const unsubscribe = socketService.onStatusChange(setStatus);
+        return unsubscribe;
+    }, []);
+
+    return status;
+}
