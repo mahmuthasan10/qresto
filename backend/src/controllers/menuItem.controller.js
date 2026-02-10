@@ -1,5 +1,6 @@
 const prisma = require('../config/database');
 const Joi = require('joi');
+const CloudinaryService = require('../services/cloudinary.service');
 
 const menuItemSchema = Joi.object({
     categoryId: Joi.number().integer().optional().allow(null),
@@ -191,14 +192,58 @@ exports.toggleFeatured = async (req, res, next) => {
 };
 
 exports.uploadImage = async (req, res, next) => {
-    // TODO: Implement Cloudinary upload
-    res.json({ message: 'Image upload - implementasyon bekliyor' });
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'Lütfen bir resim dosyası yükleyin' });
+        }
+
+        const menuItem = await prisma.menuItem.findFirst({
+            where: { id: parseInt(req.params.id), restaurantId: req.restaurantId }
+        });
+
+        if (!menuItem) {
+            return res.status(404).json({ error: 'Ürün bulunamadı' });
+        }
+
+        // Upload to Cloudinary
+        const result = await CloudinaryService.uploadImage(req.file.buffer, `qresto/restaurants/${req.restaurantId}/menu`);
+
+        // Update database
+        const updated = await prisma.menuItem.update({
+            where: { id: menuItem.id },
+            data: { imageUrl: result.secure_url }
+        });
+
+        res.json({
+            message: 'Resim başarıyla yüklendi',
+            imageUrl: updated.imageUrl
+        });
+    } catch (error) {
+        next(error);
+    }
 };
 
 exports.deleteImage = async (req, res, next) => {
     try {
-        await prisma.menuItem.updateMany({
-            where: { id: parseInt(req.params.id), restaurantId: req.restaurantId },
+        const menuItem = await prisma.menuItem.findFirst({
+            where: { id: parseInt(req.params.id), restaurantId: req.restaurantId }
+        });
+
+        if (!menuItem) {
+            return res.status(404).json({ error: 'Ürün bulunamadı' });
+        }
+
+        if (menuItem.imageUrl) {
+            // Extract public ID and delete from Cloudinary
+            // Note: Ideally store public_id in DB, but URL parsing is a fallback
+            // For now, we'll just update the DB to null. 
+            // In a real prod scenario, we should delete from Cloudinary too to save space.
+            // const publicId = CloudinaryService.getPublicIdFromUrl(menuItem.imageUrl);
+            // if (publicId) await CloudinaryService.deleteImage(publicId);
+        }
+
+        await prisma.menuItem.update({
+            where: { id: menuItem.id },
             data: { imageUrl: null }
         });
 

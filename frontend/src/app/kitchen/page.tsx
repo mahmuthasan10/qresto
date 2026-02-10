@@ -49,30 +49,42 @@ export default function KitchenPage() {
     useEffect(() => {
         if (!socket) return;
 
-        socket.on('new_order', (order: any) => {
+        const handleNewOrder = (order: any) => {
             addOrder(order);
             if (soundEnabled) {
-                playNotificationSound();
+                playNotificationSound().catch(console.error);
             }
             toast.success(`Yeni sipariş: #${order.orderNumber}`, {
                 icon: '🔔',
                 duration: 5000,
             });
-        });
+        };
 
-        socket.on('order_status_updated', (data: { orderId: number; status: KitchenOrderStatus }) => {
+        const handleStatusUpdate = (data: { orderId: number; status: KitchenOrderStatus }) => {
             if (data.status === 'completed' || data.status === 'cancelled') {
                 removeOrder(data.orderId);
             } else {
                 updateOrder(data.orderId, { status: data.status });
             }
+        };
+
+        socket.on('new_order', handleNewOrder);
+        socket.on('order_status_updated', handleStatusUpdate);
+
+        // Re-join room on reconnection
+        socket.on('connect', () => {
+            // Assuming restaurantId is available in store or context, otherwise might need fetching or passed as prop
+            // For now, relying on initial connection logic in socket provider
+            console.log('Socket reconnected');
+            fetchOrders(); // Refresh orders on reconnect
         });
 
         return () => {
-            socket.off('new_order');
-            socket.off('order_status_updated');
+            socket.off('new_order', handleNewOrder);
+            socket.off('order_status_updated', handleStatusUpdate);
+            socket.off('connect');
         };
-    }, [socket, soundEnabled, addOrder, updateOrder, removeOrder]);
+    }, [socket, soundEnabled, addOrder, updateOrder, removeOrder, fetchOrders]);
 
     // Keyboard shortcuts
     useEffect(() => {

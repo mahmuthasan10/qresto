@@ -69,6 +69,16 @@ app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
+app.get('/api/v1/health', (req, res) => {
+  res.json({
+    status: 'OK',
+    timestamp: new Date().toISOString(),
+    version: '1.0.0',
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
+
 // API Routes
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/restaurant', restaurantRoutes);

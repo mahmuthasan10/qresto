@@ -116,13 +116,33 @@ NEXT_PUBLIC_API_URL=http://localhost:3001/api/v1
 NEXT_PUBLIC_SOCKET_URL=http://localhost:3001
 ```
 
-## 📦 Deployment (Railway)
+## 📦 Deployment
+
+### Option 1: Docker (Önerilen)
+
+```bash
+# Tüm servisleri başlat
+docker-compose up -d
+
+# Sadece database
+docker-compose up -d postgres
+
+# Logları görüntüle
+docker-compose logs -f
+```
+
+### Option 2: Railway
 
 1. [Railway.app](https://railway.app) hesabı oluştur
 2. GitHub repo'yu bağla
 3. PostgreSQL ekle
 4. Environment variables ayarla
 5. Deploy!
+
+### Health Check
+- Backend: `GET /api/v1/health`
+- Frontend: `GET /`
+
 
 ## 📄 Lisans
 
