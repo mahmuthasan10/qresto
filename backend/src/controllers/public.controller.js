@@ -228,18 +228,38 @@ exports.createOrder = async (req, res, next) => {
                     create: orderItems
                 }
             },
-            include: { orderItems: true }
+            include: {
+                orderItems: true
+            }
         });
 
-        // Emit new order event
+        // Emit new order event (admin panel + mutfak ekranı ile uyumlu payload)
         const io = req.app.get('io');
         io.to(`restaurant_${session.restaurant.id}`).emit('new_order', {
-            orderId: order.id,
+            // Admin panelindeki Order tipi ile uyumlu alanlar
+            id: order.id,
             orderNumber: order.orderNumber,
+            tableId: order.tableId,
             tableNumber: order.tableNumber,
+            status: order.status,
             totalAmount: order.totalAmount,
-            itemCount: order.orderItems.length,
-            createdAt: order.createdAt
+            paymentMethod: order.paymentMethod,
+            customerNotes: order.customerNotes,
+            createdAt: order.createdAt,
+            confirmedAt: order.confirmedAt,
+            preparingAt: order.preparingAt,
+            readyAt: order.readyAt,
+            completedAt: order.completedAt,
+            cancelledAt: order.cancelledAt,
+            cancellationReason: order.cancellationReason,
+            orderItems: order.orderItems.map(item => ({
+                id: item.id,
+                itemName: item.itemName,
+                quantity: item.quantity,
+                unitPrice: item.unitPrice,
+                subtotal: item.subtotal,
+                notes: item.notes || undefined,
+            })),
         });
 
         // Update session activity

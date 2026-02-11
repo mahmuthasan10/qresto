@@ -1,4 +1,11 @@
-require('dotenv').config();
+const dotenv = require('dotenv');
+dotenv.config();
+console.log('ENV CHECK:', {
+  NODE_ENV: process.env.NODE_ENV,
+  PORT: process.env.PORT,
+  DATABASE_URL_TYPE: typeof process.env.DATABASE_URL,
+  DATABASE_URL_PREFIX: process.env.DATABASE_URL ? process.env.DATABASE_URL.substring(0, 20) : 'UNDEFINED'
+});
 
 const express = require('express');
 const cors = require('cors');
@@ -17,6 +24,7 @@ const tableRoutes = require('./routes/table.routes');
 const orderRoutes = require('./routes/order.routes');
 const sessionRoutes = require('./routes/session.routes');
 const publicRoutes = require('./routes/public.routes');
+const treatRoutes = require('./routes/treat.routes');
 
 // Import middleware
 const errorHandler = require('./middleware/errorHandler');
@@ -88,6 +96,7 @@ app.use('/api/v1/tables', tableRoutes);
 app.use('/api/v1/orders', orderRoutes);
 app.use('/api/v1/sessions', sessionRoutes);
 app.use('/api/v1/public', publicRoutes);
+app.use('/api/v1/treats', treatRoutes);
 
 // 404 handler
 app.use((req, res) => {

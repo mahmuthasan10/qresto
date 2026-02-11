@@ -2,7 +2,7 @@
 
 import { useEffect, useCallback, useRef } from 'react';
 import { useKitchenStore, KitchenOrderStatus, playNotificationSound } from '@/stores/kitchenStore';
-import { useSocket } from '@/lib/socket';
+import { useSocket, socketService } from '@/lib/socket';
 import { OrderCard } from '@/components/kitchen';
 import ConnectionIndicator from '@/components/ConnectionIndicator';
 import { Volume2, VolumeX, RefreshCw, ChefHat } from 'lucide-react';
@@ -28,6 +28,26 @@ export default function KitchenPage() {
     const socket = useSocket();
     const refreshIntervalRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
+    // Memoized handlers
+    const handleNewOrder = useCallback((order: any) => {
+        addOrder(order);
+        if (soundEnabled) {
+            playNotificationSound().catch(console.error);
+        }
+        toast.success(`Yeni sipariş: #${order.orderNumber}`, {
+            icon: '🔔',
+            duration: 5000,
+        });
+    }, [soundEnabled, addOrder]);
+
+    const handleStatusUpdate = useCallback((data: { orderId: number; status: KitchenOrderStatus }) => {
+        if (data.status === 'completed' || data.status === 'cancelled') {
+            removeOrder(data.orderId);
+        } else {
+            updateOrder(data.orderId, { status: data.status });
+        }
+    }, [updateOrder, removeOrder]);
+
 
     // Fetch orders on mount
     useEffect(() => {
@@ -47,36 +67,13 @@ export default function KitchenPage() {
 
     // WebSocket listeners
     useEffect(() => {
-        if (!socket) return;
-
-        const handleNewOrder = (order: any) => {
-            addOrder(order);
-            if (soundEnabled) {
-                playNotificationSound().catch(console.error);
-            }
-            toast.success(`Yeni sipariş: #${order.orderNumber}`, {
-                icon: '🔔',
-                duration: 5000,
-            });
-        };
-
-        const handleStatusUpdate = (data: { orderId: number; status: KitchenOrderStatus }) => {
-            if (data.status === 'completed' || data.status === 'cancelled') {
-                removeOrder(data.orderId);
-            } else {
-                updateOrder(data.orderId, { status: data.status });
-            }
-        };
+        if (!socket || !socket.connected) return;
 
         socket.on('new_order', handleNewOrder);
         socket.on('order_status_updated', handleStatusUpdate);
-
-        // Re-join room on reconnection
         socket.on('connect', () => {
-            // Assuming restaurantId is available in store or context, otherwise might need fetching or passed as prop
-            // For now, relying on initial connection logic in socket provider
             console.log('Socket reconnected');
-            fetchOrders(); // Refresh orders on reconnect
+            fetchOrders();
         });
 
         return () => {
@@ -84,7 +81,23 @@ export default function KitchenPage() {
             socket.off('order_status_updated', handleStatusUpdate);
             socket.off('connect');
         };
-    }, [socket, soundEnabled, addOrder, updateOrder, removeOrder, fetchOrders]);
+    }, [socket, handleNewOrder, handleStatusUpdate, fetchOrders]);
+
+    const handleStatusUpdateClick = async (orderId: number, currentStatus: KitchenOrderStatus) => {
+        const statusFlow: Partial<Record<KitchenOrderStatus, KitchenOrderStatus>> = {
+            pending: 'confirmed',
+            confirmed: 'preparing',
+            preparing: 'ready',
+        };
+
+        const nextStatus = statusFlow[currentStatus];
+        if (!nextStatus) return;
+
+        const success = await updateOrderStatus(orderId, nextStatus);
+        if (success) {
+            toast.success(`Sipariş durumu güncellendi`);
+        }
+    };
 
     // Keyboard shortcuts
     useEffect(() => {
@@ -105,7 +118,7 @@ export default function KitchenPage() {
             if (e.key === 'Enter' && selectedOrderId) {
                 const order = orders.find(o => o.id === selectedOrderId);
                 if (order) {
-                    handleStatusUpdate(order.id, order.status);
+                    handleStatusUpdateClick(order.id, order.status);
                 }
             }
 
@@ -117,23 +130,8 @@ export default function KitchenPage() {
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [orders, selectedOrderId, selectOrder]);
+    }, [orders, selectedOrderId, selectOrder]); // handleStatusUpdateClick is stable or should be included if not
 
-    const handleStatusUpdate = async (orderId: number, currentStatus: KitchenOrderStatus) => {
-        const statusFlow: Partial<Record<KitchenOrderStatus, KitchenOrderStatus>> = {
-            pending: 'confirmed',
-            confirmed: 'preparing',
-            preparing: 'ready',
-        };
-
-        const nextStatus = statusFlow[currentStatus];
-        if (!nextStatus) return;
-
-        const success = await updateOrderStatus(orderId, nextStatus);
-        if (success) {
-            toast.success(`Sipariş durumu güncellendi`);
-        }
-    };
 
 
     // Group orders by status

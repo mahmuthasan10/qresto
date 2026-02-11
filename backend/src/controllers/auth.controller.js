@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const Joi = require('joi');
 const prisma = require('../config/database');
 const { v4: uuidv4 } = require('uuid');
+const { logger } = require('../utils/logger');
 
 // Validation schemas
 const registerSchema = Joi.object({
@@ -129,11 +130,21 @@ exports.login = async (req, res, next) => {
         }
 
         const { email, password } = value;
+        const fs = require('fs');
 
         // Find restaurant
-        const restaurant = await prisma.restaurant.findUnique({
-            where: { email }
-        });
+        let restaurant;
+        try {
+            restaurant = await prisma.restaurant.findUnique({
+                where: { email }
+            });
+        } catch (dbError) {
+            fs.appendFileSync('backend_error.log', `DB Error findUnique: ${dbError.message}\n`);
+            // Fallback
+            restaurant = await prisma.restaurant.findFirst({
+                where: { email }
+            });
+        }
 
         if (!restaurant) {
             return res.status(401).json({ error: 'Email veya şifre hatalı' });
@@ -218,7 +229,7 @@ exports.forgotPassword = async (req, res, next) => {
         // TODO: Send email with reset link
         if (restaurant) {
             // Generate reset token and send email
-            console.log('Password reset requested for:', email);
+            logger.info('Password reset requested for: ' + email);
         }
     } catch (error) {
         next(error);

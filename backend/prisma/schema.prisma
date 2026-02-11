@@ -88,6 +88,7 @@ model MenuItem {
   restaurant Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   category   Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   orderItems OrderItem[]
+  treats     Treat[]
 
   @@index([restaurantId])
   @@index([categoryId])
@@ -105,16 +106,41 @@ model Table {
   capacity     Int?
   isActive     Boolean   @default(true) @map("is_active")
   createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
 
   // Relations
-  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  sessions   Session[]
-  orders     Order[]
+  restaurant     Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  sessions       Session[]
+  orders         Order[]
+  treatsSent     Treat[]    @relation("TreatsSent")
+  treatsReceived Treat[]    @relation("TreatsReceived")
 
   @@unique([restaurantId, tableNumber])
   @@index([restaurantId])
   @@index([qrCode])
   @@map("tables")
+}
+
+// ==================== TREATS ====================
+model Treat {
+  id          Int      @id @default(autoincrement())
+  fromTableId Int      @map("from_table_id")
+  toTableId   Int      @map("to_table_id")
+  menuItemId  Int      @map("menu_item_id")
+  status      String   @default("PENDING") @map("status") @db.VarChar(50) // PENDING, APPROVED, REJECTED, CANCELLED
+  note        String?  @map("note") @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  fromTable Table    @relation("TreatsSent", fields: [fromTableId], references: [id], onDelete: Cascade)
+  toTable   Table    @relation("TreatsReceived", fields: [toTableId], references: [id], onDelete: Cascade)
+  menuItem  MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+
+  @@index([fromTableId])
+  @@index([toTableId])
+  @@index([status])
+  @@map("treats")
 }
 
 // ==================== SESSIONS ====================

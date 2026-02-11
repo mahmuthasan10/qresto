@@ -25,18 +25,45 @@ export default function SessionTimer({ onExpire, className = '' }: SessionTimerP
         return Math.max(0, Math.floor((expiry - now) / 1000));
     }, [expiresAt]);
 
-    // Update timer every second
+    // Backend ile senkronize, güvenli oturum kontrolü
     useEffect(() => {
         if (!sessionToken || !expiresAt) return;
+
+        let verifying = false;
+
+        const verifyAndMaybeExtend = async () => {
+            if (verifying) return;
+            verifying = true;
+            try {
+                const response = await publicApi.get(`/sessions/${sessionToken}/verify`);
+                const serverExpiresAt = new Date(response.data.session.expiresAt);
+
+                // Sunucunun süresini esas al
+                if (tableNumber && restaurantName) {
+                    setSession(sessionToken, tableNumber, restaurantName, serverExpiresAt);
+                }
+
+                setIsExpired(false);
+                setIsWarning(false);
+            } catch (error: any) {
+                // Sunucu artık geçersiz diyorsa gerçekten süresi dolmuş kabul et
+                setIsExpired(true);
+                clearSession();
+                onExpire?.();
+            } finally {
+                verifying = false;
+            }
+        };
 
         const updateTimer = () => {
             const remaining = calculateTimeLeft();
             setTimeLeft(remaining);
-            setIsWarning(remaining <= 300 && remaining > 0); // 5 minutes warning
+            setIsWarning(remaining <= 300 && remaining > 0); // 5 dakika kala uyar
 
             if (remaining <= 0) {
-                setIsExpired(true);
-                onExpire?.();
+                // Tarayıcı saat farklarından etkilenmemek için
+                // önce backend'e sor, gerçekten süresi dolmuş mu
+                verifyAndMaybeExtend();
             }
         };
 
@@ -44,7 +71,7 @@ export default function SessionTimer({ onExpire, className = '' }: SessionTimerP
         const interval = setInterval(updateTimer, 1000);
 
         return () => clearInterval(interval);
-    }, [sessionToken, expiresAt, calculateTimeLeft, onExpire]);
+    }, [sessionToken, expiresAt, calculateTimeLeft, onExpire, clearSession, setSession, tableNumber, restaurantName]);
 
     // Format time as MM:SS
     const formatTime = (seconds: number): string => {

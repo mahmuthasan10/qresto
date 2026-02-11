@@ -94,7 +94,7 @@ export default function KitchenWireframe() {
 
     const getOrdersByStatus = (status: OrderStatus) => orders.filter(o => o.status === status);
 
-    const OrderCard = ({ order, nextStatus, buttonLabel }: { order: KitchenOrder; nextStatus: OrderStatus | 'completed'; buttonLabel: string }) => (
+    const renderOrderCard = ({ order, nextStatus, buttonLabel }: { order: KitchenOrder; nextStatus: OrderStatus | 'completed'; buttonLabel: string }) => (
         <Card variant="order" className="mb-3">
             <CardBody className="p-4">
                 {/* Header */}
@@ -149,7 +149,7 @@ export default function KitchenWireframe() {
         </Card>
     );
 
-    const Column = ({
+    const renderColumn = ({
         title,
         status,
         bgColor,
@@ -174,12 +174,13 @@ export default function KitchenWireframe() {
                 </div>
                 <div className="space-y-3">
                     {columnOrders.map(order => (
-                        <OrderCard
-                            key={order.id}
-                            order={order}
-                            nextStatus={nextStatus}
-                            buttonLabel={buttonLabel}
-                        />
+                        <div key={order.id}>
+                            {renderOrderCard({
+                                order,
+                                nextStatus,
+                                buttonLabel
+                            })}
+                        </div>
                     ))}
                     {columnOrders.length === 0 && (
                         <div className="text-center text-gray-400 py-12">
@@ -228,30 +229,30 @@ export default function KitchenWireframe() {
 
             {/* Kanban Board */}
             <div className="p-4 flex gap-4 overflow-x-auto">
-                <Column
-                    title="🔴 Yeni Siparişler"
-                    status="pending"
-                    bgColor="bg-red-50"
-                    borderColor="border-red-500"
-                    nextStatus="preparing"
-                    buttonLabel="HAZIRLANIYOR"
-                />
-                <Column
-                    title="🟡 Hazırlanıyor"
-                    status="preparing"
-                    bgColor="bg-yellow-50"
-                    borderColor="border-yellow-500"
-                    nextStatus="ready"
-                    buttonLabel="HAZIR"
-                />
-                <Column
-                    title="🟢 Hazır"
-                    status="ready"
-                    bgColor="bg-green-50"
-                    borderColor="border-green-500"
-                    nextStatus="completed"
-                    buttonLabel="SERVİS EDİLDİ"
-                />
+                {renderColumn({
+                    title: "🔴 Yeni Siparişler",
+                    status: "pending",
+                    bgColor: "bg-red-50",
+                    borderColor: "border-red-500",
+                    nextStatus: "preparing",
+                    buttonLabel: "HAZIRLANIYOR"
+                })}
+                {renderColumn({
+                    title: "🟡 Hazırlanıyor",
+                    status: "preparing",
+                    bgColor: "bg-yellow-50",
+                    borderColor: "border-yellow-500",
+                    nextStatus: "ready",
+                    buttonLabel: "HAZIR"
+                })}
+                {renderColumn({
+                    title: "🟢 Hazır",
+                    status: "ready",
+                    bgColor: "bg-green-50",
+                    borderColor: "border-green-500",
+                    nextStatus: "completed",
+                    buttonLabel: "SERVİS EDİLDİ"
+                })}
             </div>
 
             {/* Keyboard Shortcuts Info */}

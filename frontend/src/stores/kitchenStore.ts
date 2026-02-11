@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import api from '@/lib/api';
+import { AxiosError } from 'axios';
 
 export type KitchenOrderStatus = 'pending' | 'confirmed' | 'preparing' | 'ready' | 'completed' | 'cancelled';
 
@@ -60,7 +61,8 @@ export const useKitchenStore = create<KitchenState>((set, get) => ({
                 isLoading: false,
                 lastUpdated: new Date()
             });
-        } catch (error: any) {
+        } catch (unknownError) {
+            const error = unknownError as AxiosError<{ error: string }>;
             set({
                 error: error.response?.data?.error || 'Siparişler yüklenirken hata',
                 isLoading: false,
@@ -91,7 +93,8 @@ export const useKitchenStore = create<KitchenState>((set, get) => ({
                 };
             });
             return true;
-        } catch (error: any) {
+        } catch (unknownError) {
+            const error = unknownError as AxiosError<{ error: string }>;
             set({ error: error.response?.data?.error || 'Durum güncellenemedi' });
             return false;
         }

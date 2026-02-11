@@ -46,7 +46,7 @@ export default function AdminWireframe() {
         { id: 'settings', label: 'Ayarlar', icon: <Settings size={18} /> },
     ];
 
-    const Sidebar = () => (
+    const renderSidebar = () => (
         <aside className={`fixed inset-y-0 left-0 z-30 w-64 bg-gray-900 text-white transform transition-transform lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
             <div className="p-6 border-b border-gray-700">
                 <h1 className="text-xl font-bold">🍕 QResto Admin</h1>
@@ -306,7 +306,7 @@ export default function AdminWireframe() {
 
     return (
         <div className="min-h-screen bg-gray-100">
-            <Sidebar />
+            {renderSidebar()}
 
             {/* Mobile overlay */}
             {sidebarOpen && (

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import api from '@/lib/api';
+import { AxiosError } from 'axios';
 
 export type OrderStatus = 'pending' | 'confirmed' | 'preparing' | 'ready' | 'completed' | 'cancelled';
 
@@ -83,6 +84,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
             const currentFilters = filters || get().filters;
             const { page, limit } = get().pagination;
 
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const params: any = { page, limit };
             if (currentFilters.status && currentFilters.status !== 'all') {
                 params.status = currentFilters.status;
@@ -101,7 +103,8 @@ export const useOrderStore = create<OrderState>((set, get) => ({
                 },
                 isLoading: false,
             });
-        } catch (error: any) {
+        } catch (unknownError) {
+            const error = unknownError as AxiosError<{ error: string }>;
             set({
                 error: error.response?.data?.error || 'Siparişler yüklenirken hata oluştu',
                 isLoading: false,
@@ -113,7 +116,8 @@ export const useOrderStore = create<OrderState>((set, get) => ({
         try {
             const response = await api.get('/orders/active');
             set({ activeOrders: response.data.orders || [] });
-        } catch (error: any) {
+        } catch (unknownError) {
+            const error = unknownError as AxiosError<{ error: string }>;
             console.error('Active orders fetch error:', error);
         }
     },
@@ -136,7 +140,8 @@ export const useOrderStore = create<OrderState>((set, get) => ({
                 isLoading: false,
             }));
             return true;
-        } catch (error: any) {
+        } catch (unknownError) {
+            const error = unknownError as AxiosError<{ error: string }>;
             set({
                 error: error.response?.data?.error || 'Sipariş durumu güncellenirken hata oluştu',
                 isLoading: false,
@@ -160,7 +165,8 @@ export const useOrderStore = create<OrderState>((set, get) => ({
                 isLoading: false,
             }));
             return true;
-        } catch (error: any) {
+        } catch (unknownError) {
+            const error = unknownError as AxiosError<{ error: string }>;
             set({
                 error: error.response?.data?.error || 'Sipariş iptal edilirken hata oluştu',
                 isLoading: false,

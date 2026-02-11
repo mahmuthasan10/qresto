@@ -12,7 +12,7 @@ import {
     Eye
 } from 'lucide-react';
 import api from '@/lib/api';
-import { useSocket } from '@/lib/socket';
+import { useSocket, socketService } from '@/lib/socket';
 import toast from 'react-hot-toast';
 
 interface DashboardStats {
@@ -53,9 +53,9 @@ export default function DashboardPage() {
 
     // WebSocket listeners for real-time updates
     useEffect(() => {
-        if (!socket) return;
+        if (!socket || !socket.connected) return;
 
-        socket.on('new_order', (order: Order) => {
+        const handleNewOrder = (order: Order) => {
             setActiveOrders(prev => [order, ...prev]);
             setStats(prev => ({
                 ...prev,
@@ -63,9 +63,9 @@ export default function DashboardPage() {
                 todayRevenue: prev.todayRevenue + order.totalAmount,
             }));
             toast.success(`Yeni sipariş: ${order.orderNumber}`);
-        });
+        };
 
-        socket.on('order_status_updated', (data: { orderId: number; status: string }) => {
+        const handleOrderStatusUpdate = (data: { orderId: number; status: string }) => {
             setActiveOrders(prev =>
                 prev.map(order =>
                     order.id === data.orderId
@@ -75,11 +75,14 @@ export default function DashboardPage() {
                     !['completed', 'cancelled'].includes(order.status)
                 )
             );
-        });
+        };
+
+        socket.on('new_order', handleNewOrder);
+        socket.on('order_status_updated', handleOrderStatusUpdate);
 
         return () => {
-            socket.off('new_order');
-            socket.off('order_status_updated');
+            socket.off('new_order', handleNewOrder);
+            socket.off('order_status_updated', handleOrderStatusUpdate);
         };
     }, [socket]);
 

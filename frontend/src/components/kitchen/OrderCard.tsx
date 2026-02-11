@@ -31,7 +31,8 @@ const statusConfig: Record<KitchenOrderStatus, {
         buttonColor: 'bg-green-600 hover:bg-green-700',
     },
     ready: {
-        nextStatus: null,
+        // Mutfakta "SERVİS EDİLDİ" denince siparişi tamamlandı'ya çevir
+        nextStatus: 'completed',
         buttonText: 'SERVİS EDİLDİ',
         buttonColor: 'bg-gray-600 hover:bg-gray-700',
     },

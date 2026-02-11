@@ -1,5 +1,6 @@
 const prisma = require('../config/database');
 const Joi = require('joi');
+const { logger } = require('../utils/logger');
 
 const statusValues = ['pending', 'confirmed', 'preparing', 'ready', 'completed', 'cancelled'];
 
@@ -163,11 +164,14 @@ exports.updateStatus = async (req, res, next) => {
             return res.status(404).json({ error: 'Sipariş bulunamadı' });
         }
 
+        const oldStatus = order.status;
+        const newStatus = value.status;
+
         // Build update data
-        const updateData = { status: value.status };
+        const updateData = { status: newStatus };
         const now = new Date();
 
-        switch (value.status) {
+        switch (newStatus) {
             case 'confirmed':
                 updateData.confirmedAt = now;
                 break;
@@ -192,17 +196,21 @@ exports.updateStatus = async (req, res, next) => {
             include: { orderItems: true, table: { select: { tableNumber: true } } }
         });
 
-        // Emit real-time update
         const io = req.app.get('io');
-        io.to(`restaurant_${req.restaurantId}`).emit('order_status_updated', {
-            orderId: updated.id,
-            orderNumber: updated.orderNumber,
-            status: updated.status,
-            tableNumber: updated.tableNumber
-        });
+        // Emit real-time update
+        if (io) {
+            io.to(`restaurant_${req.restaurantId}`).emit('order_status_updated', {
+                orderId: updated.id,
+                orderNumber: updated.orderNumber,
+                status: updated.status,
+                tableNumber: updated.tableNumber
+            });
+            logger.info(`Order ${updated.orderNumber} status updated: ${oldStatus} -> ${newStatus}`);
+        }
 
         res.json({ order: updated });
     } catch (error) {
+        logger.error('Update status error:', error);
         next(error);
     }
 };

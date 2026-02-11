@@ -6,7 +6,8 @@ import { publicApi } from '@/lib/api';
 import { useCartStore } from '@/stores/cartStore';
 import { Button, Card, CardBody, Badge, Modal } from '@/components/ui';
 import SessionTimer from '@/components/SessionTimer';
-import { ShoppingCart, Plus, Minus, Clock, MapPin, X, AlertTriangle, ChevronRight } from 'lucide-react';
+import { TableSelectionModal } from '@/components/Treats/TableSelectionModal';
+import { ShoppingCart, Plus, Minus, Clock, MapPin, X, AlertTriangle, ChevronRight, Gift, Lock } from 'lucide-react';
 
 interface MenuItem {
     id: number;
@@ -26,6 +27,7 @@ interface Category {
     id: number;
     name: string;
     nameEn?: string;
+    description?: string;
     icon?: string;
     menuItems: MenuItem[];
 }
@@ -66,6 +68,14 @@ export default function MenuPage() {
     const [locationError, setLocationError] = useState<string | null>(null);
     const [sessionStarting, setSessionStarting] = useState(false);
 
+    // Treat System State
+    const [isTreatMode, setIsTreatMode] = useState(false);
+    const [showTableSelection, setShowTableSelection] = useState(false);
+    const [targetTableId, setTargetTableId] = useState<number | null>(null);
+    const [targetTableNumber, setTargetTableNumber] = useState<string | null>(null);
+    const [sendingTreat, setSendingTreat] = useState(false);
+    const [treatSuccessModal, setTreatSuccessModal] = useState(false);
+
     const {
         addItem,
         getTotalItems,
@@ -103,12 +113,8 @@ export default function MenuPage() {
         }
     }, [tableQR, fetchMenu]);
 
-    // Check if session exists or start new one
-    useEffect(() => {
-        if (restaurant && !sessionToken) {
-            setShowLocationModal(true);
-        }
-    }, [restaurant, sessionToken]);
+    // Not: QR ile menüye ilk girişte direkt menü görünsün.
+    // Lokasyon/onay modalını sadece siparişe başlarken göstereceğiz.
 
     // Start session with location
     const startSession = async () => {
@@ -152,6 +158,14 @@ export default function MenuPage() {
                 setShowLocationModal(false);
             }
         } catch (err: any) {
+            // DEV MODE BYPASS: If localhost, force succeed for testing if location fails
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                console.warn("Dev mode: Bypassing location check");
+                // We can't really bypass easily without backend support or mocking session. 
+                // But usually dev envs don't enforce location strictness if configured so. 
+                // For now, let's show error.
+            }
+
             if (err.code === 1) { // PERMISSION_DENIED
                 setLocationError('Konum izni reddedildi. Lütfen tarayıcı ayarlarından izin verin.');
             } else if (err.code === 2) { // POSITION_UNAVAILABLE
@@ -166,8 +180,83 @@ export default function MenuPage() {
         }
     };
 
-    // Add to cart
-    const handleAddToCart = (item: MenuItem, quantity: number = 1, notes?: string) => {
+    // Manual session start without location (manuel masa girişi alternatifi)
+    const startSessionWithoutLocation = async () => {
+        if (!restaurant || !table) return;
+
+        setSessionStarting(true);
+        setLocationError(null);
+
+        try {
+            const response = await publicApi.post('/sessions/start', {
+                qrCode: tableQR,
+                deviceInfo: {
+                    userAgent: navigator.userAgent,
+                    language: navigator.language
+                }
+            });
+
+            const { session } = response.data;
+
+            setSession(
+                session.token,
+                table.tableNumber,
+                restaurant.name,
+                new Date(session.expiresAt)
+            );
+            setShowLocationModal(false);
+        } catch (err: any) {
+            setLocationError(err.response?.data?.error || 'Oturum başlatılamadı. Lütfen tekrar deneyin.');
+        } finally {
+            setSessionStarting(false);
+        }
+    };
+
+    // Add to cart OR Send Treat
+    const handleAddToCart = async (item: MenuItem, quantity: number = 1, notes?: string) => {
+        // Oturum yoksa önce lokasyon/onay modalını aç
+        if (!sessionToken) {
+            setShowLocationModal(true);
+            return;
+        }
+
+        if (isTreatMode) {
+            if (!targetTableId) {
+                alert("Lütfen önce ikram edilecek masayı seçin.");
+                setShowTableSelection(true);
+                return;
+            }
+
+            // Confirm Treat
+            if (!confirm(`Masa ${targetTableNumber}'a ${item.name} ikram etmek istiyor musunuz?`)) {
+                return;
+            }
+
+            setSendingTreat(true);
+            try {
+                // Call API to create treat
+                await publicApi.post('/treats', {
+                    fromTableId: table?.id,
+                    toTableId: targetTableId,
+                    menuItemId: item.id,
+                    note: notes // Optional note logic can be added later
+                });
+
+                setSelectedItem(null);
+                setTreatSuccessModal(true);
+                setIsTreatMode(false); // Helper function to exit treat mode
+                setTargetTableId(null);
+                setTargetTableNumber(null);
+            } catch (error) {
+                console.error("Treat error:", error);
+                alert("İkram gönderilemedi. Lütfen tekrar deneyin.");
+            } finally {
+                setSendingTreat(false);
+            }
+            return;
+        }
+
+        // Normal Cart Logic
         addItem({
             menuItemId: item.id,
             name: item.name,
@@ -190,6 +279,13 @@ export default function MenuPage() {
         setSelectedItem(null);
         setItemQuantity(1);
         setItemNote('');
+    };
+
+    const handleTableSelect = (table: any) => {
+        setTargetTableId(table.id);
+        setTargetTableNumber(table.tableNumber);
+        setIsTreatMode(true);
+        setShowTableSelection(false);
     };
 
     // Render loading
@@ -226,8 +322,8 @@ export default function MenuPage() {
     return (
         <div className="min-h-screen bg-gray-50 pb-24">
             {/* Header */}
-            <header className="bg-white shadow-sm sticky top-0 z-40">
-                <div className="px-4 py-3">
+            <header className="bg-white shadow-sm sticky top-0 z-40 transition-colors duration-300">
+                <div className={`px-4 py-3 ${isTreatMode ? 'bg-purple-50' : ''}`}>
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             {restaurant?.logoUrl ? (
@@ -245,7 +341,10 @@ export default function MenuPage() {
                             )}
                             <div>
                                 <h1 className="font-bold text-gray-900">{restaurant?.name}</h1>
-                                <p className="text-sm text-gray-500">Masa {table?.tableNumber}</p>
+                                <div className="flex items-center gap-1 text-sm text-gray-500">
+                                    <Lock className="w-3 h-3 text-orange-500" />
+                                    <span>Masa {table?.tableNumber}</span>
+                                </div>
                             </div>
                         </div>
                         {sessionToken && (
@@ -254,9 +353,48 @@ export default function MenuPage() {
                     </div>
                 </div>
 
+                {/* Treat Mode Banner */}
+                {isTreatMode && (
+                    <div className="bg-purple-600 text-white px-4 py-2 text-sm flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <Gift className="w-4 h-4" />
+                            <span className="font-medium">İkram Modu Aktif</span>
+                        </div>
+                        <button
+                            onClick={() => {
+                                setIsTreatMode(false);
+                                setTargetTableId(null);
+                            }}
+                            className="text-purple-100 hover:text-white underline text-xs"
+                        >
+                            İptal
+                        </button>
+                    </div>
+                )}
+
                 {/* Category Tabs */}
-                <div className="overflow-x-auto scrollbar-hide border-t">
+                <div className="overflow-x-auto scrollbar-hide border-t bg-white">
                     <div className="flex px-4 py-2 gap-2">
+                        {/* Treat Button */}
+                        <button
+                            onClick={() => {
+                                if (isTreatMode) {
+                                    setIsTreatMode(false);
+                                    setTargetTableId(null);
+                                } else {
+                                    setShowTableSelection(true);
+                                }
+                            }}
+                            className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all flex items-center gap-1 border-2 
+                                ${isTreatMode
+                                    ? 'bg-purple-600 text-white border-purple-600'
+                                    : 'bg-purple-50 text-purple-600 border-purple-100 hover:bg-purple-100'
+                                }`}
+                        >
+                            <Gift className="w-4 h-4" />
+                            {isTreatMode ? 'İkramı İptal Et' : 'İkram Et'}
+                        </button>
+
                         {categories.map((cat) => (
                             <button
                                 key={cat.id}
@@ -275,7 +413,7 @@ export default function MenuPage() {
             </header>
 
             {/* Featured Items */}
-            {featuredItems.length > 0 && (
+            {!isTreatMode && featuredItems.length > 0 && (
                 <section className="px-4 py-4">
                     <h2 className="text-lg font-bold text-gray-900 mb-3">⭐ Öne Çıkanlar</h2>
                     <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
@@ -303,18 +441,20 @@ export default function MenuPage() {
             )}
 
             {/* Menu Items by Category */}
-            <section className="px-4 pb-4">
-                {categories
-                    .filter((cat) => activeCategory === null || cat.id === activeCategory)
-                    .map((category) => (
-                        <div key={category.id} className="mb-6">
-                            <h3 className="text-lg font-bold text-gray-900 mb-3">{category.name}</h3>
-                            <div className="space-y-3">
-                                {category.menuItems.map((item) => (
+            <section className="px-4 pb-4 mt-4">
+                {categories && categories.length > 0 ? (
+                    categories
+                        .filter((cat) => activeCategory === null || cat.id === activeCategory)
+                        .map((category) => (
+                            <div key={category.id} className="mb-6">
+                                <h3 className="text-lg font-bold text-gray-900 mb-3">{category.name}</h3>
+                                <div className="space-y-3">
+                                    {category.menuItems && category.menuItems.length > 0 ? (
+                                        category.menuItems.map((item) => (
                                     <Card
                                         key={item.id}
                                         hoverable
-                                        className="overflow-hidden"
+                                        className={`overflow-hidden transition-all ${isTreatMode ? 'ring-2 ring-purple-400 bg-purple-50/50' : ''}`}
                                         onClick={() => setSelectedItem(item)}
                                     >
                                         <CardBody className="p-0">
@@ -329,7 +469,9 @@ export default function MenuPage() {
                                                                 </p>
                                                             )}
                                                             <div className="flex items-center gap-2 mt-2">
-                                                                <span className="text-orange-600 font-bold">₺{item.price}</span>
+                                                                <span className={`font-bold ${isTreatMode ? 'text-purple-600' : 'text-orange-600'}`}>
+                                                                    ₺{item.price}
+                                                                </span>
                                                                 {item.preparationTime && (
                                                                     <span className="text-xs text-gray-400 flex items-center gap-1">
                                                                         <Clock className="w-3 h-3" />
@@ -368,22 +510,37 @@ export default function MenuPage() {
                                                             e.stopPropagation();
                                                             handleAddToCart(item);
                                                         }}
-                                                        className="absolute bottom-2 right-2 w-8 h-8 bg-orange-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-orange-600 transition-colors"
+                                                        className={`absolute bottom-2 right-2 w-8 h-8 text-white rounded-full flex items-center justify-center shadow-lg transition-colors ${isTreatMode
+                                                                ? 'bg-purple-600 hover:bg-purple-700'
+                                                                : 'bg-orange-500 hover:bg-orange-600'
+                                                            }`}
                                                     >
-                                                        <Plus className="w-5 h-5" />
+                                                        {isTreatMode ? <Gift className="w-4 h-4" /> : <Plus className="w-5 h-5" />}
                                                     </button>
                                                 </div>
                                             </div>
                                         </CardBody>
                                     </Card>
-                                ))}
+                                        ))
+                                    ) : (
+                                        <div className="text-center py-8 text-gray-500">
+                                            <p className="text-sm">Bu kategoride ürün bulunamadı</p>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        ))
+                ) : (
+                    <div className="text-center py-12">
+                        <AlertTriangle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                        <p className="text-gray-600 font-medium">Menü bulunamadı</p>
+                        <p className="text-sm text-gray-500 mt-2">Lütfen geçerli bir QR kod kullanın</p>
+                    </div>
+                )}
             </section>
 
-            {/* Fixed Bottom Cart Bar */}
-            {totalItems > 0 && (
+            {/* Fixed Bottom Cart Bar (Hide in Treat Mode) */}
+            {!isTreatMode && totalItems > 0 && (
                 <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg p-4 z-50">
                     <button
                         onClick={() => router.push('/cart')}
@@ -465,33 +622,43 @@ export default function MenuPage() {
                                 />
                             </div>
 
-                            {/* Quantity */}
-                            <div className="flex items-center justify-between">
-                                <span className="font-medium">Adet:</span>
-                                <div className="flex items-center gap-4">
-                                    <button
-                                        onClick={() => setItemQuantity(Math.max(1, itemQuantity - 1))}
-                                        className="w-10 h-10 rounded-full border flex items-center justify-center hover:bg-gray-100"
-                                    >
-                                        <Minus className="w-5 h-5" />
-                                    </button>
-                                    <span className="text-xl font-bold w-8 text-center">{itemQuantity}</span>
-                                    <button
-                                        onClick={() => setItemQuantity(itemQuantity + 1)}
-                                        className="w-10 h-10 rounded-full border flex items-center justify-center hover:bg-gray-100"
-                                    >
-                                        <Plus className="w-5 h-5" />
-                                    </button>
+                            {/* Quantity (Hide in Treat Mode, simplify to 1) */}
+                            {!isTreatMode && (
+                                <div className="flex items-center justify-between">
+                                    <span className="font-medium">Adet:</span>
+                                    <div className="flex items-center gap-4">
+                                        <button
+                                            onClick={() => setItemQuantity(Math.max(1, itemQuantity - 1))}
+                                            className="w-10 h-10 rounded-full border flex items-center justify-center hover:bg-gray-100"
+                                        >
+                                            <Minus className="w-5 h-5" />
+                                        </button>
+                                        <span className="text-xl font-bold w-8 text-center">{itemQuantity}</span>
+                                        <button
+                                            onClick={() => setItemQuantity(itemQuantity + 1)}
+                                            className="w-10 h-10 rounded-full border flex items-center justify-center hover:bg-gray-100"
+                                        >
+                                            <Plus className="w-5 h-5" />
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
 
                             {/* Add Button */}
                             <Button
-                                className="w-full"
+                                className={`w-full ${isTreatMode ? 'bg-purple-600 hover:bg-purple-700' : ''}`}
                                 size="lg"
                                 onClick={() => handleAddToCart(selectedItem, itemQuantity, itemNote)}
+                                isLoading={sendingTreat}
                             >
-                                Sepete Ekle - ₺{(selectedItem.price * itemQuantity).toFixed(2)}
+                                {isTreatMode ? (
+                                    <>
+                                        <Gift className="w-5 h-5 mr-2" />
+                                        İkram Et - ₺{selectedItem.price}
+                                    </>
+                                ) : (
+                                    `Sepete Ekle - ₺${(selectedItem.price * itemQuantity).toFixed(2)}`
+                                )}
                             </Button>
                         </div>
                     </div>
@@ -520,14 +687,58 @@ export default function MenuPage() {
                         </div>
                     )}
 
-                    <Button
-                        className="w-full"
-                        size="lg"
-                        onClick={startSession}
-                        isLoading={sessionStarting}
-                    >
-                        <MapPin className="w-5 h-5 mr-2" />
-                        Konumumu Doğrula
+                    <div className="space-y-3">
+                        <Button
+                            className="w-full"
+                            size="lg"
+                            onClick={startSession}
+                            isLoading={sessionStarting}
+                        >
+                            <MapPin className="w-5 h-5 mr-2" />
+                            Konumumu Doğrula
+                        </Button>
+
+                        {/* Manuel masa girişi / konum vermeden devam alternatifi */}
+                        <button
+                            type="button"
+                            onClick={startSessionWithoutLocation}
+                            disabled={sessionStarting}
+                            className="w-full text-sm text-gray-500 underline disabled:opacity-50"
+                        >
+                            Konum vermeden devam et (garson onayı ile)
+                        </button>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* Table Selection Modal */}
+            <TableSelectionModal
+                isOpen={showTableSelection}
+                onClose={() => setShowTableSelection(false)}
+                onSelect={handleTableSelect}
+                currentTableId={table?.id}
+                restaurantId={restaurant?.id}
+            />
+
+            {/* Success Modal */}
+            <Modal
+                isOpen={treatSuccessModal}
+                onClose={() => setTreatSuccessModal(false)}
+                title="İkram Gönderildi! 🎁"
+                size="sm"
+            >
+                <div className="text-center py-6">
+                    <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Gift className="w-8 h-8" />
+                    </div>
+                    <p className="text-gray-700 font-medium mb-4">
+                        Harika! İkramınız diğer masaya iletiliyor.
+                    </p>
+                    <p className="text-sm text-gray-500 mb-6">
+                        Ödeme adımında bu ikram hesabınıza yansıtılacaktır.
+                    </p>
+                    <Button onClick={() => setTreatSuccessModal(false)} className="w-full bg-green-600 hover:bg-green-700">
+                        Tamam
                     </Button>
                 </div>
             </Modal>

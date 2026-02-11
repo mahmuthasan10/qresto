@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import api from '@/lib/api';
+import { AxiosError } from 'axios';
 
 interface Category {
     id: number;
@@ -60,7 +61,8 @@ export const useMenuStore = create<MenuState>((set, get) => ({
         try {
             const response = await api.get('/categories');
             set({ categories: response.data.categories || [], isLoading: false });
-        } catch (error: any) {
+        } catch (unknownError) {
+            const error = unknownError as AxiosError<{ error: string }>;
             set({
                 error: error.response?.data?.error || 'Kategoriler yüklenirken hata oluştu',
                 isLoading: false,
@@ -74,7 +76,8 @@ export const useMenuStore = create<MenuState>((set, get) => ({
             const params = categoryId ? { categoryId } : {};
             const response = await api.get('/menu-items', { params });
             set({ menuItems: response.data.menuItems || [], isLoading: false });
-        } catch (error: any) {
+        } catch (unknownError) {
+            const error = unknownError as AxiosError<{ error: string }>;
             set({
                 error: error.response?.data?.error || 'Menü öğeleri yüklenirken hata oluştu',
                 isLoading: false,
@@ -92,7 +95,8 @@ export const useMenuStore = create<MenuState>((set, get) => ({
                 isLoading: false,
             }));
             return true;
-        } catch (error: any) {
+        } catch (unknownError) {
+            const error = unknownError as AxiosError<{ error: string }>;
             set({
                 error: error.response?.data?.error || 'Kategori eklenirken hata oluştu',
                 isLoading: false,
@@ -113,7 +117,8 @@ export const useMenuStore = create<MenuState>((set, get) => ({
                 isLoading: false,
             }));
             return true;
-        } catch (error: any) {
+        } catch (unknownError) {
+            const error = unknownError as AxiosError<{ error: string }>;
             set({
                 error: error.response?.data?.error || 'Kategori güncellenirken hata oluştu',
                 isLoading: false,
@@ -131,7 +136,8 @@ export const useMenuStore = create<MenuState>((set, get) => ({
                 isLoading: false,
             }));
             return true;
-        } catch (error: any) {
+        } catch (unknownError) {
+            const error = unknownError as AxiosError<{ error: string }>;
             set({
                 error: error.response?.data?.error || 'Kategori silinirken hata oluştu',
                 isLoading: false,
@@ -150,7 +156,8 @@ export const useMenuStore = create<MenuState>((set, get) => ({
                 isLoading: false,
             }));
             return true;
-        } catch (error: any) {
+        } catch (unknownError) {
+            const error = unknownError as AxiosError<{ error: string }>;
             set({
                 error: error.response?.data?.error || 'Ürün eklenirken hata oluştu',
                 isLoading: false,
@@ -171,7 +178,8 @@ export const useMenuStore = create<MenuState>((set, get) => ({
                 isLoading: false,
             }));
             return true;
-        } catch (error: any) {
+        } catch (unknownError) {
+            const error = unknownError as AxiosError<{ error: string }>;
             set({
                 error: error.response?.data?.error || 'Ürün güncellenirken hata oluştu',
                 isLoading: false,
@@ -189,7 +197,8 @@ export const useMenuStore = create<MenuState>((set, get) => ({
                 isLoading: false,
             }));
             return true;
-        } catch (error: any) {
+        } catch (unknownError) {
+            const error = unknownError as AxiosError<{ error: string }>;
             set({
                 error: error.response?.data?.error || 'Ürün silinirken hata oluştu',
                 isLoading: false,
@@ -208,7 +217,8 @@ export const useMenuStore = create<MenuState>((set, get) => ({
                 ),
             }));
             return true;
-        } catch (error: any) {
+        } catch (unknownError) {
+            const error = unknownError as AxiosError<{ error: string }>;
             set({
                 error: error.response?.data?.error || 'Durum değiştirilirken hata oluştu',
             });

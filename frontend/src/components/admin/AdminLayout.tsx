@@ -14,7 +14,8 @@ import {
     Menu as MenuIcon,
     X,
     Bell,
-    ChevronDown
+    ChevronDown,
+    Gift
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -27,6 +28,7 @@ const menuItems = [
     { id: 'menu', label: 'Menü', icon: UtensilsCrossed, href: '/admin/menu' },
     { id: 'tables', label: 'Masalar', icon: Grid3X3, href: '/admin/tables' },
     { id: 'orders', label: 'Siparişler', icon: ClipboardList, href: '/admin/orders' },
+    { id: 'treats', label: 'İkramlar', icon: Gift, href: '/admin/treats' },
     { id: 'settings', label: 'Ayarlar', icon: Settings, href: '/admin/settings' },
 ];
 
@@ -86,8 +88,8 @@ function Sidebar({ isOpen, onClose }: SidebarProps) {
                                 href={item.href}
                                 onClick={onClose}
                                 className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive
-                                        ? 'bg-orange-500 text-white'
-                                        : 'text-gray-300 hover:bg-gray-800'
+                                    ? 'bg-orange-500 text-white'
+                                    : 'text-gray-300 hover:bg-gray-800'
                                     }`}
                             >
                                 <Icon size={20} />
