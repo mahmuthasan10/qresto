@@ -12,6 +12,7 @@
     "test:e2e": "start-server-and-test dev http://localhost:3000 cypress:headless"
   },
   "dependencies": {
+    "@hello-pangea/dnd": "^18.0.1",
     "@hookform/resolvers": "^5.2.2",
     "axios": "^1.13.4",
     "lucide-react": "^0.563.0",

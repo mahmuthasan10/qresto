@@ -15,6 +15,12 @@ interface Restaurant {
     sessionTimeout: number;
     logoUrl?: string;
     subscriptionPlan: string;
+    themeSettings?: {
+        primaryColor?: string;
+        secondaryColor?: string;
+        fontFamily?: string;
+        borderRadius?: string;
+    };
 }
 
 interface AuthState {

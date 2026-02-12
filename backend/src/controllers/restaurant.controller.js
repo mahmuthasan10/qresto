@@ -16,8 +16,16 @@ const updateLocationSchema = Joi.object({
 
 const updateSettingsSchema = Joi.object({
     sessionTimeout: Joi.number().min(5).max(120).optional(),
-    locationRadius: Joi.number().min(10).max(500).optional()
+    locationRadius: Joi.number().min(10).max(500).optional(),
+    themeSettings: Joi.object({
+        primaryColor: Joi.string().pattern(/^#([0-9A-F]{3}){1,2}$/i).optional(),
+        secondaryColor: Joi.string().pattern(/^#([0-9A-F]{3}){1,2}$/i).optional(),
+        fontFamily: Joi.string().optional(),
+        borderRadius: Joi.string().optional()
+    }).optional()
 });
+
+// ...
 
 exports.getProfile = async (req, res, next) => {
     try {
@@ -103,6 +111,7 @@ exports.updateSettings = async (req, res, next) => {
                 id: true,
                 sessionTimeout: true,
                 locationRadius: true,
+                themeSettings: true,
                 updatedAt: true
             }
         });

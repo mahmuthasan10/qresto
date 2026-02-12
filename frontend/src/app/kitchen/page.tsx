@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useCallback, useRef } from 'react';
+import { useEffect, useCallback, useRef, useState } from 'react';
 import { useKitchenStore, KitchenOrderStatus, playNotificationSound } from '@/stores/kitchenStore';
 import { useSocket, socketService } from '@/lib/socket';
 import { OrderCard } from '@/components/kitchen';
 import ConnectionIndicator from '@/components/ConnectionIndicator';
 import { Volume2, VolumeX, RefreshCw, ChefHat } from 'lucide-react';
 import toast from 'react-hot-toast';
-
+import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 
 export default function KitchenPage() {
     const {
@@ -27,6 +27,11 @@ export default function KitchenPage() {
 
     const socket = useSocket();
     const refreshIntervalRef = useRef<NodeJS.Timeout | undefined>(undefined);
+    const [isClient, setIsClient] = useState(false);
+
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
 
     // Memoized handlers
     const handleNewOrder = useCallback((order: any) => {
@@ -99,6 +104,19 @@ export default function KitchenPage() {
         }
     };
 
+    const onDragEnd = async (result: DropResult) => {
+        const { destination, source, draggableId } = result;
+
+        if (!destination) return;
+        if (destination.droppableId === source.droppableId && destination.index === source.index) return;
+
+        const orderId = parseInt(draggableId);
+        const newStatus = destination.droppableId as KitchenOrderStatus;
+
+        // Call API
+        await updateOrderStatus(orderId, newStatus);
+    };
+
     // Keyboard shortcuts
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -130,8 +148,7 @@ export default function KitchenPage() {
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [orders, selectedOrderId, selectOrder]); // handleStatusUpdateClick is stable or should be included if not
-
+    }, [orders, selectedOrderId, selectOrder]);
 
 
     // Group orders by status
@@ -143,6 +160,10 @@ export default function KitchenPage() {
         if (!date) return '--:--';
         return date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
     };
+
+    if (!isClient) {
+        return <div className="min-h-screen bg-gray-100 flex items-center justify-center">Yükleniyor...</div>;
+    }
 
     return (
         <div className="min-h-screen bg-gray-100">
@@ -200,88 +221,144 @@ export default function KitchenPage() {
             </header>
 
             {/* Kanban Board */}
-            <div className="p-6 grid grid-cols-3 gap-6 h-[calc(100vh-88px)]">
-                {/* New Orders Column */}
-                <div className="flex flex-col">
-                    <div className="bg-red-600 text-white px-4 py-3 rounded-t-xl flex items-center justify-between">
-                        <h2 className="text-xl font-bold">YENİ SİPARİŞLER</h2>
-                        <span className="bg-white text-red-600 w-8 h-8 rounded-full flex items-center justify-center font-bold">
-                            {pendingOrders.length}
-                        </span>
+            <DragDropContext onDragEnd={onDragEnd}>
+                <div className="p-6 grid grid-cols-3 gap-6 h-[calc(100vh-88px)]">
+                    {/* New Orders Column */}
+                    <div className="flex flex-col h-full">
+                        <div className="bg-red-600 text-white px-4 py-3 rounded-t-xl flex items-center justify-between">
+                            <h2 className="text-xl font-bold">YENİ SİPARİŞLER</h2>
+                            <span className="bg-white text-red-600 w-8 h-8 rounded-full flex items-center justify-center font-bold">
+                                {pendingOrders.length}
+                            </span>
+                        </div>
+                        <Droppable droppableId="confirmed">
+                            {(provided) => (
+                                <div
+                                    ref={provided.innerRef}
+                                    {...provided.droppableProps}
+                                    className="bg-red-50 flex-1 p-4 rounded-b-xl overflow-y-auto space-y-4 border-2 border-t-0 border-red-200"
+                                >
+                                    {pendingOrders.map((order, index) => (
+                                        <Draggable key={order.id} draggableId={order.id.toString()} index={index}>
+                                            {(provided, snapshot) => (
+                                                <div
+                                                    ref={provided.innerRef}
+                                                    {...provided.draggableProps}
+                                                    {...provided.dragHandleProps}
+                                                    style={{ ...provided.draggableProps.style }}
+                                                >
+                                                    <OrderCard
+                                                        order={order}
+                                                        isSelected={selectedOrderId === order.id}
+                                                        onSelect={() => selectOrder(order.id)}
+                                                        onStatusUpdate={(status) => updateOrderStatus(order.id, status)}
+                                                    />
+                                                </div>
+                                            )}
+                                        </Draggable>
+                                    ))}
+                                    {provided.placeholder}
+                                    {pendingOrders.length === 0 && (
+                                        <div className="text-center text-gray-400 py-8">
+                                            <p>Bekleyen sipariş yok</p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </Droppable>
                     </div>
-                    <div className="bg-red-50 flex-1 p-4 rounded-b-xl overflow-y-auto space-y-4 border-2 border-t-0 border-red-200">
-                        {pendingOrders.length === 0 ? (
-                            <div className="text-center text-gray-400 py-8">
-                                <p>Bekleyen sipariş yok</p>
-                            </div>
-                        ) : (
-                            pendingOrders.map(order => (
-                                <OrderCard
-                                    key={order.id}
-                                    order={order}
-                                    isSelected={selectedOrderId === order.id}
-                                    onSelect={() => selectOrder(order.id)}
-                                    onStatusUpdate={(status) => updateOrderStatus(order.id, status)}
-                                />
-                            ))
-                        )}
-                    </div>
-                </div>
 
-                {/* Preparing Column */}
-                <div className="flex flex-col">
-                    <div className="bg-orange-500 text-white px-4 py-3 rounded-t-xl flex items-center justify-between">
-                        <h2 className="text-xl font-bold">HAZIRLANIYOR</h2>
-                        <span className="bg-white text-orange-600 w-8 h-8 rounded-full flex items-center justify-center font-bold">
-                            {preparingOrders.length}
-                        </span>
+                    {/* Preparing Column */}
+                    <div className="flex flex-col h-full">
+                        <div className="bg-orange-500 text-white px-4 py-3 rounded-t-xl flex items-center justify-between">
+                            <h2 className="text-xl font-bold">HAZIRLANIYOR</h2>
+                            <span className="bg-white text-orange-600 w-8 h-8 rounded-full flex items-center justify-center font-bold">
+                                {preparingOrders.length}
+                            </span>
+                        </div>
+                        <Droppable droppableId="preparing">
+                            {(provided) => (
+                                <div
+                                    ref={provided.innerRef}
+                                    {...provided.droppableProps}
+                                    className="bg-orange-50 flex-1 p-4 rounded-b-xl overflow-y-auto space-y-4 border-2 border-t-0 border-orange-200"
+                                >
+                                    {preparingOrders.map((order, index) => (
+                                        <Draggable key={order.id} draggableId={order.id.toString()} index={index}>
+                                            {(provided) => (
+                                                <div
+                                                    ref={provided.innerRef}
+                                                    {...provided.draggableProps}
+                                                    {...provided.dragHandleProps}
+                                                    style={{ ...provided.draggableProps.style }}
+                                                >
+                                                    <OrderCard
+                                                        order={order}
+                                                        isSelected={selectedOrderId === order.id}
+                                                        onSelect={() => selectOrder(order.id)}
+                                                        onStatusUpdate={(status) => updateOrderStatus(order.id, status)}
+                                                    />
+                                                </div>
+                                            )}
+                                        </Draggable>
+                                    ))}
+                                    {provided.placeholder}
+                                    {preparingOrders.length === 0 && (
+                                        <div className="text-center text-gray-400 py-8">
+                                            <p>Hazırlanan sipariş yok</p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </Droppable>
                     </div>
-                    <div className="bg-orange-50 flex-1 p-4 rounded-b-xl overflow-y-auto space-y-4 border-2 border-t-0 border-orange-200">
-                        {preparingOrders.length === 0 ? (
-                            <div className="text-center text-gray-400 py-8">
-                                <p>Hazırlanan sipariş yok</p>
-                            </div>
-                        ) : (
-                            preparingOrders.map(order => (
-                                <OrderCard
-                                    key={order.id}
-                                    order={order}
-                                    isSelected={selectedOrderId === order.id}
-                                    onSelect={() => selectOrder(order.id)}
-                                    onStatusUpdate={(status) => updateOrderStatus(order.id, status)}
-                                />
-                            ))
-                        )}
-                    </div>
-                </div>
 
-                {/* Ready Column */}
-                <div className="flex flex-col">
-                    <div className="bg-green-600 text-white px-4 py-3 rounded-t-xl flex items-center justify-between">
-                        <h2 className="text-xl font-bold">HAZIR</h2>
-                        <span className="bg-white text-green-600 w-8 h-8 rounded-full flex items-center justify-center font-bold">
-                            {readyOrders.length}
-                        </span>
-                    </div>
-                    <div className="bg-green-50 flex-1 p-4 rounded-b-xl overflow-y-auto space-y-4 border-2 border-t-0 border-green-200">
-                        {readyOrders.length === 0 ? (
-                            <div className="text-center text-gray-400 py-8">
-                                <p>Servis bekleyen yok</p>
-                            </div>
-                        ) : (
-                            readyOrders.map(order => (
-                                <OrderCard
-                                    key={order.id}
-                                    order={order}
-                                    isSelected={selectedOrderId === order.id}
-                                    onSelect={() => selectOrder(order.id)}
-                                    onStatusUpdate={(status) => updateOrderStatus(order.id, status)}
-                                />
-                            ))
-                        )}
+                    {/* Ready Column */}
+                    <div className="flex flex-col h-full">
+                        <div className="bg-green-600 text-white px-4 py-3 rounded-t-xl flex items-center justify-between">
+                            <h2 className="text-xl font-bold">HAZIR</h2>
+                            <span className="bg-white text-green-600 w-8 h-8 rounded-full flex items-center justify-center font-bold">
+                                {readyOrders.length}
+                            </span>
+                        </div>
+                        <Droppable droppableId="ready">
+                            {(provided) => (
+                                <div
+                                    ref={provided.innerRef}
+                                    {...provided.droppableProps}
+                                    className="bg-green-50 flex-1 p-4 rounded-b-xl overflow-y-auto space-y-4 border-2 border-t-0 border-green-200"
+                                >
+                                    {readyOrders.map((order, index) => (
+                                        <Draggable key={order.id} draggableId={order.id.toString()} index={index}>
+                                            {(provided) => (
+                                                <div
+                                                    ref={provided.innerRef}
+                                                    {...provided.draggableProps}
+                                                    {...provided.dragHandleProps}
+                                                    style={{ ...provided.draggableProps.style }}
+                                                >
+                                                    <OrderCard
+                                                        order={order}
+                                                        isSelected={selectedOrderId === order.id}
+                                                        onSelect={() => selectOrder(order.id)}
+                                                        onStatusUpdate={(status) => updateOrderStatus(order.id, status)}
+                                                    />
+                                                </div>
+                                            )}
+                                        </Draggable>
+                                    ))}
+                                    {provided.placeholder}
+                                    {readyOrders.length === 0 && (
+                                        <div className="text-center text-gray-400 py-8">
+                                            <p>Servis bekleyen yok</p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </Droppable>
                     </div>
                 </div>
-            </div>
+            </DragDropContext>
 
             {/* Keyboard Shortcuts Help */}
             <div className="fixed bottom-4 left-4 bg-gray-800 text-white px-4 py-2 rounded-lg text-sm opacity-70">

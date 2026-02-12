@@ -24,6 +24,7 @@ model Restaurant {
   locationRadius     Int       @default(50) @map("location_radius") // metre
   sessionTimeout     Int       @default(30) @map("session_timeout") // dakika
   logoUrl            String?   @map("logo_url") @db.VarChar(500)
+  themeSettings      Json?     @map("theme_settings")
   isActive           Boolean   @default(true) @map("is_active")
   subscriptionPlan   String    @default("starter") @map("subscription_plan") @db.VarChar(50)
   subscriptionExpiresAt DateTime? @map("subscription_expires_at")
@@ -93,6 +94,8 @@ model MenuItem {
   @@index([restaurantId])
   @@index([categoryId])
   @@index([isAvailable])
+  @@index([restaurantId, categoryId])
+  @@index([restaurantId, isAvailable])
   @@map("menu_items")
 }
 
@@ -202,6 +205,7 @@ model Order {
   @@index([status])
   @@index([createdAt])
   @@index([orderNumber])
+  @@index([restaurantId, status, createdAt]) // Compound index for efficient order listing
   @@map("orders")
 }
 

@@ -7,6 +7,7 @@ import { useCartStore } from '@/stores/cartStore';
 import { Button, Card, CardBody, Badge, Modal } from '@/components/ui';
 import SessionTimer from '@/components/SessionTimer';
 import { TableSelectionModal } from '@/components/Treats/TableSelectionModal';
+import ThemeProvider from '@/components/providers/ThemeProvider';
 import { ShoppingCart, Plus, Minus, Clock, MapPin, X, AlertTriangle, ChevronRight, Gift, Lock } from 'lucide-react';
 
 interface MenuItem {
@@ -41,6 +42,12 @@ interface Restaurant {
     longitude: string;
     locationRadius: number;
     sessionTimeout: number;
+    themeSettings?: {
+        primaryColor?: string;
+        secondaryColor?: string;
+        fontFamily?: string;
+        borderRadius?: string;
+    };
 }
 
 interface TableInfo {
@@ -320,428 +327,430 @@ export default function MenuPage() {
     const totalAmount = getTotalAmount();
 
     return (
-        <div className="min-h-screen bg-gray-50 pb-24">
-            {/* Header */}
-            <header className="bg-white shadow-sm sticky top-0 z-40 transition-colors duration-300">
-                <div className={`px-4 py-3 ${isTreatMode ? 'bg-purple-50' : ''}`}>
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            {restaurant?.logoUrl ? (
-                                <img
-                                    src={restaurant.logoUrl}
-                                    alt={restaurant.name}
-                                    className="w-10 h-10 rounded-full object-cover"
-                                />
-                            ) : (
-                                <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
-                                    <span className="text-orange-600 font-bold text-lg">
-                                        {restaurant?.name?.charAt(0)}
-                                    </span>
-                                </div>
-                            )}
-                            <div>
-                                <h1 className="font-bold text-gray-900">{restaurant?.name}</h1>
-                                <div className="flex items-center gap-1 text-sm text-gray-500">
-                                    <Lock className="w-3 h-3 text-orange-500" />
-                                    <span>Masa {table?.tableNumber}</span>
+        <ThemeProvider themeSettings={restaurant?.themeSettings}>
+            <div className="min-h-screen bg-gray-50 pb-24">
+                {/* Header */}
+                <header className="bg-white shadow-sm sticky top-0 z-40 transition-colors duration-300">
+                    <div className={`px-4 py-3 ${isTreatMode ? 'bg-purple-50' : ''}`}>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                {restaurant?.logoUrl ? (
+                                    <img
+                                        src={restaurant.logoUrl}
+                                        alt={restaurant.name}
+                                        className="w-10 h-10 rounded-full object-cover"
+                                    />
+                                ) : (
+                                    <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                                        <span className="text-orange-600 font-bold text-lg">
+                                            {restaurant?.name?.charAt(0)}
+                                        </span>
+                                    </div>
+                                )}
+                                <div>
+                                    <h1 className="font-bold text-gray-900">{restaurant?.name}</h1>
+                                    <div className="flex items-center gap-1 text-sm text-gray-500">
+                                        <Lock className="w-3 h-3 text-orange-500" />
+                                        <span>Masa {table?.tableNumber}</span>
+                                    </div>
                                 </div>
                             </div>
+                            {sessionToken && (
+                                <SessionTimer onExpire={() => router.push('/')} />
+                            )}
                         </div>
-                        {sessionToken && (
-                            <SessionTimer onExpire={() => router.push('/')} />
-                        )}
                     </div>
-                </div>
 
-                {/* Treat Mode Banner */}
-                {isTreatMode && (
-                    <div className="bg-purple-600 text-white px-4 py-2 text-sm flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <Gift className="w-4 h-4" />
-                            <span className="font-medium">İkram Modu Aktif</span>
-                        </div>
-                        <button
-                            onClick={() => {
-                                setIsTreatMode(false);
-                                setTargetTableId(null);
-                            }}
-                            className="text-purple-100 hover:text-white underline text-xs"
-                        >
-                            İptal
-                        </button>
-                    </div>
-                )}
-
-                {/* Category Tabs */}
-                <div className="overflow-x-auto scrollbar-hide border-t bg-white">
-                    <div className="flex px-4 py-2 gap-2">
-                        {/* Treat Button */}
-                        <button
-                            onClick={() => {
-                                if (isTreatMode) {
+                    {/* Treat Mode Banner */}
+                    {isTreatMode && (
+                        <div className="bg-purple-600 text-white px-4 py-2 text-sm flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <Gift className="w-4 h-4" />
+                                <span className="font-medium">İkram Modu Aktif</span>
+                            </div>
+                            <button
+                                onClick={() => {
                                     setIsTreatMode(false);
                                     setTargetTableId(null);
-                                } else {
-                                    setShowTableSelection(true);
-                                }
-                            }}
-                            className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all flex items-center gap-1 border-2 
-                                ${isTreatMode
-                                    ? 'bg-purple-600 text-white border-purple-600'
-                                    : 'bg-purple-50 text-purple-600 border-purple-100 hover:bg-purple-100'
-                                }`}
-                        >
-                            <Gift className="w-4 h-4" />
-                            {isTreatMode ? 'İkramı İptal Et' : 'İkram Et'}
-                        </button>
-
-                        {categories.map((cat) => (
-                            <button
-                                key={cat.id}
-                                onClick={() => setActiveCategory(cat.id)}
-                                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${activeCategory === cat.id
-                                    ? 'bg-orange-500 text-white'
-                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                    }`}
+                                }}
+                                className="text-purple-100 hover:text-white underline text-xs"
                             >
-                                {cat.icon && <span className="mr-1">{cat.icon}</span>}
-                                {cat.name}
+                                İptal
                             </button>
-                        ))}
-                    </div>
-                </div>
-            </header>
-
-            {/* Featured Items */}
-            {!isTreatMode && featuredItems.length > 0 && (
-                <section className="px-4 py-4">
-                    <h2 className="text-lg font-bold text-gray-900 mb-3">⭐ Öne Çıkanlar</h2>
-                    <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-                        {featuredItems.map((item) => (
-                            <div
-                                key={item.id}
-                                onClick={() => setSelectedItem(item)}
-                                className="flex-shrink-0 w-40 bg-white rounded-xl shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
-                            >
-                                <div className="h-24 bg-gray-100">
-                                    {item.imageUrl ? (
-                                        <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center text-3xl">🍽️</div>
-                                    )}
-                                </div>
-                                <div className="p-2">
-                                    <p className="font-medium text-sm truncate">{item.name}</p>
-                                    <p className="text-orange-600 font-bold">₺{item.price}</p>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </section>
-            )}
-
-            {/* Menu Items by Category */}
-            <section className="px-4 pb-4 mt-4">
-                {categories && categories.length > 0 ? (
-                    categories
-                        .filter((cat) => activeCategory === null || cat.id === activeCategory)
-                        .map((category) => (
-                            <div key={category.id} className="mb-6">
-                                <h3 className="text-lg font-bold text-gray-900 mb-3">{category.name}</h3>
-                                <div className="space-y-3">
-                                    {category.menuItems && category.menuItems.length > 0 ? (
-                                        category.menuItems.map((item) => (
-                                    <Card
-                                        key={item.id}
-                                        hoverable
-                                        className={`overflow-hidden transition-all ${isTreatMode ? 'ring-2 ring-purple-400 bg-purple-50/50' : ''}`}
-                                        onClick={() => setSelectedItem(item)}
-                                    >
-                                        <CardBody className="p-0">
-                                            <div className="flex">
-                                                <div className="flex-1 p-3">
-                                                    <div className="flex items-start justify-between">
-                                                        <div className="flex-1">
-                                                            <h4 className="font-medium text-gray-900">{item.name}</h4>
-                                                            {item.description && (
-                                                                <p className="text-sm text-gray-500 mt-1 line-clamp-2">
-                                                                    {item.description}
-                                                                </p>
-                                                            )}
-                                                            <div className="flex items-center gap-2 mt-2">
-                                                                <span className={`font-bold ${isTreatMode ? 'text-purple-600' : 'text-orange-600'}`}>
-                                                                    ₺{item.price}
-                                                                </span>
-                                                                {item.preparationTime && (
-                                                                    <span className="text-xs text-gray-400 flex items-center gap-1">
-                                                                        <Clock className="w-3 h-3" />
-                                                                        {item.preparationTime} dk
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                            {/* Allergens & Dietary */}
-                                                            {(item.allergens.length > 0 || item.dietaryInfo.length > 0) && (
-                                                                <div className="flex flex-wrap gap-1 mt-2">
-                                                                    {item.dietaryInfo.map((info) => (
-                                                                        <span key={info} className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
-                                                                            {info}
-                                                                        </span>
-                                                                    ))}
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                {/* Image or Add Button */}
-                                                <div className="w-24 relative">
-                                                    {item.imageUrl ? (
-                                                        <img
-                                                            src={item.imageUrl}
-                                                            alt={item.name}
-                                                            className="w-full h-full object-cover"
-                                                        />
-                                                    ) : (
-                                                        <div className="w-full h-full bg-gray-100 flex items-center justify-center text-3xl">
-                                                            🍽️
-                                                        </div>
-                                                    )}
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            handleAddToCart(item);
-                                                        }}
-                                                        className={`absolute bottom-2 right-2 w-8 h-8 text-white rounded-full flex items-center justify-center shadow-lg transition-colors ${isTreatMode
-                                                                ? 'bg-purple-600 hover:bg-purple-700'
-                                                                : 'bg-orange-500 hover:bg-orange-600'
-                                                            }`}
-                                                    >
-                                                        {isTreatMode ? <Gift className="w-4 h-4" /> : <Plus className="w-5 h-5" />}
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </CardBody>
-                                    </Card>
-                                        ))
-                                    ) : (
-                                        <div className="text-center py-8 text-gray-500">
-                                            <p className="text-sm">Bu kategoride ürün bulunamadı</p>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        ))
-                ) : (
-                    <div className="text-center py-12">
-                        <AlertTriangle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                        <p className="text-gray-600 font-medium">Menü bulunamadı</p>
-                        <p className="text-sm text-gray-500 mt-2">Lütfen geçerli bir QR kod kullanın</p>
-                    </div>
-                )}
-            </section>
-
-            {/* Fixed Bottom Cart Bar (Hide in Treat Mode) */}
-            {!isTreatMode && totalItems > 0 && (
-                <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg p-4 z-50">
-                    <button
-                        onClick={() => router.push('/cart')}
-                        className="w-full bg-orange-500 text-white py-4 rounded-xl flex items-center justify-between px-6 hover:bg-orange-600 transition-colors"
-                    >
-                        <div className="flex items-center gap-3">
-                            <div className="relative">
-                                <ShoppingCart className="w-6 h-6" />
-                                <span className="absolute -top-2 -right-2 bg-white text-orange-500 text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
-                                    {totalItems}
-                                </span>
-                            </div>
-                            <span className="font-medium">Sepeti Görüntüle</span>
-                        </div>
-                        <span className="font-bold text-lg">₺{totalAmount.toFixed(2)}</span>
-                    </button>
-                </div>
-            )}
-
-            {/* Item Detail Modal */}
-            <Modal
-                isOpen={!!selectedItem}
-                onClose={() => {
-                    setSelectedItem(null);
-                    setItemQuantity(1);
-                    setItemNote('');
-                }}
-                title={selectedItem?.name || ''}
-                size="lg"
-            >
-                {selectedItem && (
-                    <div>
-                        {/* Image */}
-                        <div className="h-48 bg-gray-100 -mx-6 -mt-4 mb-4">
-                            {selectedItem.imageUrl ? (
-                                <img
-                                    src={selectedItem.imageUrl}
-                                    alt={selectedItem.name}
-                                    className="w-full h-full object-cover"
-                                />
-                            ) : (
-                                <div className="w-full h-full flex items-center justify-center text-6xl">🍽️</div>
-                            )}
-                        </div>
-
-                        {/* Details */}
-                        <div className="space-y-4">
-                            <p className="text-2xl font-bold text-orange-600">₺{selectedItem.price}</p>
-
-                            {selectedItem.description && (
-                                <p className="text-gray-600">{selectedItem.description}</p>
-                            )}
-
-                            {/* Allergens */}
-                            {selectedItem.allergens.length > 0 && (
-                                <div>
-                                    <p className="text-sm font-medium text-gray-700 mb-1">Alerjenler:</p>
-                                    <div className="flex flex-wrap gap-1">
-                                        {selectedItem.allergens.map((a) => (
-                                            <span key={a} className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full">
-                                                {a}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Notes */}
-                            <div>
-                                <label className="text-sm font-medium text-gray-700 block mb-1">
-                                    Özel Not (opsiyonel)
-                                </label>
-                                <textarea
-                                    value={itemNote}
-                                    onChange={(e) => setItemNote(e.target.value)}
-                                    placeholder="Örn: Baharatsız olsun..."
-                                    className="w-full border rounded-lg p-3 text-sm resize-none"
-                                    rows={2}
-                                />
-                            </div>
-
-                            {/* Quantity (Hide in Treat Mode, simplify to 1) */}
-                            {!isTreatMode && (
-                                <div className="flex items-center justify-between">
-                                    <span className="font-medium">Adet:</span>
-                                    <div className="flex items-center gap-4">
-                                        <button
-                                            onClick={() => setItemQuantity(Math.max(1, itemQuantity - 1))}
-                                            className="w-10 h-10 rounded-full border flex items-center justify-center hover:bg-gray-100"
-                                        >
-                                            <Minus className="w-5 h-5" />
-                                        </button>
-                                        <span className="text-xl font-bold w-8 text-center">{itemQuantity}</span>
-                                        <button
-                                            onClick={() => setItemQuantity(itemQuantity + 1)}
-                                            className="w-10 h-10 rounded-full border flex items-center justify-center hover:bg-gray-100"
-                                        >
-                                            <Plus className="w-5 h-5" />
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Add Button */}
-                            <Button
-                                className={`w-full ${isTreatMode ? 'bg-purple-600 hover:bg-purple-700' : ''}`}
-                                size="lg"
-                                onClick={() => handleAddToCart(selectedItem, itemQuantity, itemNote)}
-                                isLoading={sendingTreat}
-                            >
-                                {isTreatMode ? (
-                                    <>
-                                        <Gift className="w-5 h-5 mr-2" />
-                                        İkram Et - ₺{selectedItem.price}
-                                    </>
-                                ) : (
-                                    `Sepete Ekle - ₺${(selectedItem.price * itemQuantity).toFixed(2)}`
-                                )}
-                            </Button>
-                        </div>
-                    </div>
-                )}
-            </Modal>
-
-            {/* Location Permission Modal */}
-            <Modal
-                isOpen={showLocationModal}
-                onClose={() => { }}
-                title="Konum İzni Gerekli"
-                showCloseButton={false}
-            >
-                <div className="text-center py-4">
-                    <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <MapPin className="w-10 h-10 text-orange-500" />
-                    </div>
-                    <p className="text-gray-600 mb-6">
-                        Sipariş verebilmek için restoranda olduğunuzu doğrulamamız gerekiyor.
-                        Lütfen konum izni verin.
-                    </p>
-
-                    {locationError && (
-                        <div className="bg-red-50 text-red-700 p-3 rounded-lg mb-4 text-sm">
-                            {locationError}
                         </div>
                     )}
 
-                    <div className="space-y-3">
-                        <Button
-                            className="w-full"
-                            size="lg"
-                            onClick={startSession}
-                            isLoading={sessionStarting}
-                        >
-                            <MapPin className="w-5 h-5 mr-2" />
-                            Konumumu Doğrula
-                        </Button>
+                    {/* Category Tabs */}
+                    <div className="overflow-x-auto scrollbar-hide border-t bg-white">
+                        <div className="flex px-4 py-2 gap-2">
+                            {/* Treat Button */}
+                            <button
+                                onClick={() => {
+                                    if (isTreatMode) {
+                                        setIsTreatMode(false);
+                                        setTargetTableId(null);
+                                    } else {
+                                        setShowTableSelection(true);
+                                    }
+                                }}
+                                className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all flex items-center gap-1 border-2 
+                                ${isTreatMode
+                                        ? 'bg-purple-600 text-white border-purple-600'
+                                        : 'bg-purple-50 text-purple-600 border-purple-100 hover:bg-purple-100'
+                                    }`}
+                            >
+                                <Gift className="w-4 h-4" />
+                                {isTreatMode ? 'İkramı İptal Et' : 'İkram Et'}
+                            </button>
 
-                        {/* Manuel masa girişi / konum vermeden devam alternatifi */}
+                            {categories.map((cat) => (
+                                <button
+                                    key={cat.id}
+                                    onClick={() => setActiveCategory(cat.id)}
+                                    className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${activeCategory === cat.id
+                                        ? 'bg-orange-500 text-white'
+                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                        }`}
+                                >
+                                    {cat.icon && <span className="mr-1">{cat.icon}</span>}
+                                    {cat.name}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </header>
+
+                {/* Featured Items */}
+                {!isTreatMode && featuredItems.length > 0 && (
+                    <section className="px-4 py-4">
+                        <h2 className="text-lg font-bold text-gray-900 mb-3">⭐ Öne Çıkanlar</h2>
+                        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                            {featuredItems.map((item) => (
+                                <div
+                                    key={item.id}
+                                    onClick={() => setSelectedItem(item)}
+                                    className="flex-shrink-0 w-40 bg-white rounded-xl shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+                                >
+                                    <div className="h-24 bg-gray-100">
+                                        {item.imageUrl ? (
+                                            <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-3xl">🍽️</div>
+                                        )}
+                                    </div>
+                                    <div className="p-2">
+                                        <p className="font-medium text-sm truncate">{item.name}</p>
+                                        <p className="text-orange-600 font-bold">₺{item.price}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+                )}
+
+                {/* Menu Items by Category */}
+                <section className="px-4 pb-4 mt-4">
+                    {categories && categories.length > 0 ? (
+                        categories
+                            .filter((cat) => activeCategory === null || cat.id === activeCategory)
+                            .map((category) => (
+                                <div key={category.id} className="mb-6">
+                                    <h3 className="text-lg font-bold text-gray-900 mb-3">{category.name}</h3>
+                                    <div className="space-y-3">
+                                        {category.menuItems && category.menuItems.length > 0 ? (
+                                            category.menuItems.map((item) => (
+                                                <Card
+                                                    key={item.id}
+                                                    hoverable
+                                                    className={`overflow-hidden transition-all ${isTreatMode ? 'ring-2 ring-purple-400 bg-purple-50/50' : ''}`}
+                                                    onClick={() => setSelectedItem(item)}
+                                                >
+                                                    <CardBody className="p-0">
+                                                        <div className="flex">
+                                                            <div className="flex-1 p-3">
+                                                                <div className="flex items-start justify-between">
+                                                                    <div className="flex-1">
+                                                                        <h4 className="font-medium text-gray-900">{item.name}</h4>
+                                                                        {item.description && (
+                                                                            <p className="text-sm text-gray-500 mt-1 line-clamp-2">
+                                                                                {item.description}
+                                                                            </p>
+                                                                        )}
+                                                                        <div className="flex items-center gap-2 mt-2">
+                                                                            <span className={`font-bold ${isTreatMode ? 'text-purple-600' : 'text-orange-600'}`}>
+                                                                                ₺{item.price}
+                                                                            </span>
+                                                                            {item.preparationTime && (
+                                                                                <span className="text-xs text-gray-400 flex items-center gap-1">
+                                                                                    <Clock className="w-3 h-3" />
+                                                                                    {item.preparationTime} dk
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                        {/* Allergens & Dietary */}
+                                                                        {(item.allergens.length > 0 || item.dietaryInfo.length > 0) && (
+                                                                            <div className="flex flex-wrap gap-1 mt-2">
+                                                                                {item.dietaryInfo.map((info) => (
+                                                                                    <span key={info} className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                                                                                        {info}
+                                                                                    </span>
+                                                                                ))}
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            {/* Image or Add Button */}
+                                                            <div className="w-24 relative">
+                                                                {item.imageUrl ? (
+                                                                    <img
+                                                                        src={item.imageUrl}
+                                                                        alt={item.name}
+                                                                        className="w-full h-full object-cover"
+                                                                    />
+                                                                ) : (
+                                                                    <div className="w-full h-full bg-gray-100 flex items-center justify-center text-3xl">
+                                                                        🍽️
+                                                                    </div>
+                                                                )}
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleAddToCart(item);
+                                                                    }}
+                                                                    className={`absolute bottom-2 right-2 w-8 h-8 text-white rounded-full flex items-center justify-center shadow-lg transition-colors ${isTreatMode
+                                                                        ? 'bg-purple-600 hover:bg-purple-700'
+                                                                        : 'bg-orange-500 hover:bg-orange-600'
+                                                                        }`}
+                                                                >
+                                                                    {isTreatMode ? <Gift className="w-4 h-4" /> : <Plus className="w-5 h-5" />}
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </CardBody>
+                                                </Card>
+                                            ))
+                                        ) : (
+                                            <div className="text-center py-8 text-gray-500">
+                                                <p className="text-sm">Bu kategoride ürün bulunamadı</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            ))
+                    ) : (
+                        <div className="text-center py-12">
+                            <AlertTriangle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                            <p className="text-gray-600 font-medium">Menü bulunamadı</p>
+                            <p className="text-sm text-gray-500 mt-2">Lütfen geçerli bir QR kod kullanın</p>
+                        </div>
+                    )}
+                </section>
+
+                {/* Fixed Bottom Cart Bar (Hide in Treat Mode) */}
+                {!isTreatMode && totalItems > 0 && (
+                    <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg p-4 z-50">
                         <button
-                            type="button"
-                            onClick={startSessionWithoutLocation}
-                            disabled={sessionStarting}
-                            className="w-full text-sm text-gray-500 underline disabled:opacity-50"
+                            onClick={() => router.push('/cart')}
+                            className="w-full bg-orange-500 text-white py-4 rounded-xl flex items-center justify-between px-6 hover:bg-orange-600 transition-colors"
                         >
-                            Konum vermeden devam et (garson onayı ile)
+                            <div className="flex items-center gap-3">
+                                <div className="relative">
+                                    <ShoppingCart className="w-6 h-6" />
+                                    <span className="absolute -top-2 -right-2 bg-white text-orange-500 text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
+                                        {totalItems}
+                                    </span>
+                                </div>
+                                <span className="font-medium">Sepeti Görüntüle</span>
+                            </div>
+                            <span className="font-bold text-lg">₺{totalAmount.toFixed(2)}</span>
                         </button>
                     </div>
-                </div>
-            </Modal>
+                )}
 
-            {/* Table Selection Modal */}
-            <TableSelectionModal
-                isOpen={showTableSelection}
-                onClose={() => setShowTableSelection(false)}
-                onSelect={handleTableSelect}
-                currentTableId={table?.id}
-                restaurantId={restaurant?.id}
-            />
+                {/* Item Detail Modal */}
+                <Modal
+                    isOpen={!!selectedItem}
+                    onClose={() => {
+                        setSelectedItem(null);
+                        setItemQuantity(1);
+                        setItemNote('');
+                    }}
+                    title={selectedItem?.name || ''}
+                    size="lg"
+                >
+                    {selectedItem && (
+                        <div>
+                            {/* Image */}
+                            <div className="h-48 bg-gray-100 -mx-6 -mt-4 mb-4">
+                                {selectedItem.imageUrl ? (
+                                    <img
+                                        src={selectedItem.imageUrl}
+                                        alt={selectedItem.name}
+                                        className="w-full h-full object-cover"
+                                    />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-6xl">🍽️</div>
+                                )}
+                            </div>
 
-            {/* Success Modal */}
-            <Modal
-                isOpen={treatSuccessModal}
-                onClose={() => setTreatSuccessModal(false)}
-                title="İkram Gönderildi! 🎁"
-                size="sm"
-            >
-                <div className="text-center py-6">
-                    <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Gift className="w-8 h-8" />
+                            {/* Details */}
+                            <div className="space-y-4">
+                                <p className="text-2xl font-bold text-orange-600">₺{selectedItem.price}</p>
+
+                                {selectedItem.description && (
+                                    <p className="text-gray-600">{selectedItem.description}</p>
+                                )}
+
+                                {/* Allergens */}
+                                {selectedItem.allergens.length > 0 && (
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-700 mb-1">Alerjenler:</p>
+                                        <div className="flex flex-wrap gap-1">
+                                            {selectedItem.allergens.map((a) => (
+                                                <span key={a} className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full">
+                                                    {a}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Notes */}
+                                <div>
+                                    <label className="text-sm font-medium text-gray-700 block mb-1">
+                                        Özel Not (opsiyonel)
+                                    </label>
+                                    <textarea
+                                        value={itemNote}
+                                        onChange={(e) => setItemNote(e.target.value)}
+                                        placeholder="Örn: Baharatsız olsun..."
+                                        className="w-full border rounded-lg p-3 text-sm resize-none"
+                                        rows={2}
+                                    />
+                                </div>
+
+                                {/* Quantity (Hide in Treat Mode, simplify to 1) */}
+                                {!isTreatMode && (
+                                    <div className="flex items-center justify-between">
+                                        <span className="font-medium">Adet:</span>
+                                        <div className="flex items-center gap-4">
+                                            <button
+                                                onClick={() => setItemQuantity(Math.max(1, itemQuantity - 1))}
+                                                className="w-10 h-10 rounded-full border flex items-center justify-center hover:bg-gray-100"
+                                            >
+                                                <Minus className="w-5 h-5" />
+                                            </button>
+                                            <span className="text-xl font-bold w-8 text-center">{itemQuantity}</span>
+                                            <button
+                                                onClick={() => setItemQuantity(itemQuantity + 1)}
+                                                className="w-10 h-10 rounded-full border flex items-center justify-center hover:bg-gray-100"
+                                            >
+                                                <Plus className="w-5 h-5" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Add Button */}
+                                <Button
+                                    className={`w-full ${isTreatMode ? 'bg-purple-600 hover:bg-purple-700' : ''}`}
+                                    size="lg"
+                                    onClick={() => handleAddToCart(selectedItem, itemQuantity, itemNote)}
+                                    isLoading={sendingTreat}
+                                >
+                                    {isTreatMode ? (
+                                        <>
+                                            <Gift className="w-5 h-5 mr-2" />
+                                            İkram Et - ₺{selectedItem.price}
+                                        </>
+                                    ) : (
+                                        `Sepete Ekle - ₺${(selectedItem.price * itemQuantity).toFixed(2)}`
+                                    )}
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+                </Modal>
+
+                {/* Location Permission Modal */}
+                <Modal
+                    isOpen={showLocationModal}
+                    onClose={() => { }}
+                    title="Konum İzni Gerekli"
+                    showCloseButton={false}
+                >
+                    <div className="text-center py-4">
+                        <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <MapPin className="w-10 h-10 text-orange-500" />
+                        </div>
+                        <p className="text-gray-600 mb-6">
+                            Sipariş verebilmek için restoranda olduğunuzu doğrulamamız gerekiyor.
+                            Lütfen konum izni verin.
+                        </p>
+
+                        {locationError && (
+                            <div className="bg-red-50 text-red-700 p-3 rounded-lg mb-4 text-sm">
+                                {locationError}
+                            </div>
+                        )}
+
+                        <div className="space-y-3">
+                            <Button
+                                className="w-full"
+                                size="lg"
+                                onClick={startSession}
+                                isLoading={sessionStarting}
+                            >
+                                <MapPin className="w-5 h-5 mr-2" />
+                                Konumumu Doğrula
+                            </Button>
+
+                            {/* Manuel masa girişi / konum vermeden devam alternatifi */}
+                            <button
+                                type="button"
+                                onClick={startSessionWithoutLocation}
+                                disabled={sessionStarting}
+                                className="w-full text-sm text-gray-500 underline disabled:opacity-50"
+                            >
+                                Konum vermeden devam et (garson onayı ile)
+                            </button>
+                        </div>
                     </div>
-                    <p className="text-gray-700 font-medium mb-4">
-                        Harika! İkramınız diğer masaya iletiliyor.
-                    </p>
-                    <p className="text-sm text-gray-500 mb-6">
-                        Ödeme adımında bu ikram hesabınıza yansıtılacaktır.
-                    </p>
-                    <Button onClick={() => setTreatSuccessModal(false)} className="w-full bg-green-600 hover:bg-green-700">
-                        Tamam
-                    </Button>
-                </div>
-            </Modal>
-        </div>
+                </Modal>
+
+                {/* Table Selection Modal */}
+                <TableSelectionModal
+                    isOpen={showTableSelection}
+                    onClose={() => setShowTableSelection(false)}
+                    onSelect={handleTableSelect}
+                    currentTableId={table?.id}
+                    restaurantId={restaurant?.id}
+                />
+
+                {/* Success Modal */}
+                <Modal
+                    isOpen={treatSuccessModal}
+                    onClose={() => setTreatSuccessModal(false)}
+                    title="İkram Gönderildi! 🎁"
+                    size="sm"
+                >
+                    <div className="text-center py-6">
+                        <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Gift className="w-8 h-8" />
+                        </div>
+                        <p className="text-gray-700 font-medium mb-4">
+                            Harika! İkramınız diğer masaya iletiliyor.
+                        </p>
+                        <p className="text-sm text-gray-500 mb-6">
+                            Ödeme adımında bu ikram hesabınıza yansıtılacaktır.
+                        </p>
+                        <Button onClick={() => setTreatSuccessModal(false)} className="w-full bg-green-600 hover:bg-green-700">
+                            Tamam
+                        </Button>
+                    </div>
+                </Modal>
+            </div>
+        </ThemeProvider>
     );
 }

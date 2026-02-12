@@ -1,6 +1,6 @@
 const prisma = require('../config/database');
 const Joi = require('joi');
-const CloudinaryService = require('../services/cloudinary.service');
+const ImageService = require('../services/image.service');
 
 const menuItemSchema = Joi.object({
     categoryId: Joi.number().integer().optional().allow(null),
@@ -191,6 +191,12 @@ exports.toggleFeatured = async (req, res, next) => {
     }
 };
 
+
+
+// ... existing imports ...
+
+// ... inside handler ...
+
 exports.uploadImage = async (req, res, next) => {
     try {
         if (!req.file) {
@@ -205,13 +211,18 @@ exports.uploadImage = async (req, res, next) => {
             return res.status(404).json({ error: 'Ürün bulunamadı' });
         }
 
-        // Upload to Cloudinary
-        const result = await CloudinaryService.uploadImage(req.file.buffer, `qresto/restaurants/${req.restaurantId}/menu`);
+        // Upload to Cloudflare R2
+        const imageUrl = await ImageService.uploadImage(req.file.buffer, `restaurants/${req.restaurantId}/menu`);
+
+        // If there was an old image, try to delete it
+        if (menuItem.imageUrl) {
+            await ImageService.deleteImage(menuItem.imageUrl);
+        }
 
         // Update database
         const updated = await prisma.menuItem.update({
             where: { id: menuItem.id },
-            data: { imageUrl: result.secure_url }
+            data: { imageUrl }
         });
 
         res.json({
@@ -234,12 +245,7 @@ exports.deleteImage = async (req, res, next) => {
         }
 
         if (menuItem.imageUrl) {
-            // Extract public ID and delete from Cloudinary
-            // Note: Ideally store public_id in DB, but URL parsing is a fallback
-            // For now, we'll just update the DB to null. 
-            // In a real prod scenario, we should delete from Cloudinary too to save space.
-            // const publicId = CloudinaryService.getPublicIdFromUrl(menuItem.imageUrl);
-            // if (publicId) await CloudinaryService.deleteImage(publicId);
+            await ImageService.deleteImage(menuItem.imageUrl);
         }
 
         await prisma.menuItem.update({

@@ -1,5 +1,6 @@
 const prisma = require('../config/database');
 const { v4: uuidv4 } = require('uuid');
+const { redisClient } = require('../config/redis');
 
 // Haversine formula ile mesafe hesaplama (metre)
 const calculateDistance = (lat1, lon1, lat2, lon2) => {
@@ -115,6 +116,26 @@ exports.start = async (req, res, next) => {
             }
         });
 
+        // Save to Redis
+        const sessionData = {
+            id: session.id,
+            sessionToken: session.sessionToken,
+            restaurantId: table.restaurant.id,
+            tableId: table.id,
+            tableNumber: table.tableNumber,
+            tableName: table.tableName,
+            restaurantName: table.restaurant.name,
+            restaurantSlug: table.restaurant.slug,
+            expiresAt: expiresAt.toISOString()
+        };
+
+        await redisClient.set(
+            `session:${session.sessionToken}`,
+            JSON.stringify(sessionData),
+            'EX',
+            sessionTimeout * 60 // seconds
+        );
+
         res.status(201).json({
             session: {
                 token: session.sessionToken,
@@ -137,8 +158,38 @@ exports.start = async (req, res, next) => {
 
 exports.verify = async (req, res, next) => {
     try {
+        const token = req.params.token;
+
+        // Try to get from Redis first
+        const cachedSessionStr = await redisClient.get(`session:${token}`);
+
+        if (cachedSessionStr) {
+            const cachedSession = JSON.parse(cachedSessionStr);
+            const expiresAt = new Date(cachedSession.expiresAt);
+            const now = new Date();
+
+            // Calculate remaining time
+            const remainingMs = expiresAt.getTime() - now.getTime();
+            const remainingMinutes = Math.floor(remainingMs / 1000 / 60);
+
+            return res.json({
+                valid: true,
+                session: {
+                    expiresAt: expiresAt,
+                    remainingMinutes,
+                    tableNumber: cachedSession.tableNumber,
+                    tableName: cachedSession.tableName
+                },
+                restaurant: {
+                    name: cachedSession.restaurantName,
+                    slug: cachedSession.restaurantSlug
+                }
+            });
+        }
+
+        // Fallback to DB
         const session = await prisma.session.findUnique({
-            where: { sessionToken: req.params.token },
+            where: { sessionToken: token },
             include: {
                 table: { select: { tableNumber: true, tableName: true } },
                 restaurant: { select: { name: true, slug: true } }
@@ -154,15 +205,40 @@ exports.verify = async (req, res, next) => {
         const isActive = session.isActive && !isExpired;
 
         if (!isActive) {
-            return res.status(403).json({
+            return res.json({
                 error: 'Oturum süresi dolmuş',
                 valid: false,
                 expired: isExpired
             });
         }
 
-        // Calculate remaining time
+        // If found in DB but not Redis (and valid), we could re-cache it, 
+        // but for now let's just return it. 
+        // Or re-cache for remaining time?
         const remainingMs = session.expiresAt.getTime() - now.getTime();
+        const remainingSeconds = Math.round(remainingMs / 1000);
+
+        if (remainingSeconds > 0) {
+            const sessionData = {
+                id: session.id,
+                sessionToken: session.sessionToken,
+                restaurantId: session.restaurantId,
+                tableId: session.tableId,
+                tableNumber: session.table.tableNumber,
+                tableName: session.table.tableName,
+                restaurantName: session.restaurant.name,
+                restaurantSlug: session.restaurant.slug,
+                expiresAt: session.expiresAt.toISOString()
+            };
+
+            await redisClient.set(
+                `session:${session.sessionToken}`,
+                JSON.stringify(sessionData),
+                'EX',
+                remainingSeconds
+            );
+        }
+
         const remainingMinutes = Math.floor(remainingMs / 1000 / 60);
 
         res.json({
@@ -182,8 +258,9 @@ exports.verify = async (req, res, next) => {
 
 exports.extend = async (req, res, next) => {
     try {
+        const token = req.params.token;
         const session = await prisma.session.findUnique({
-            where: { sessionToken: req.params.token },
+            where: { sessionToken: token },
             include: { restaurant: { select: { sessionTimeout: true } } }
         });
 
@@ -191,9 +268,11 @@ exports.extend = async (req, res, next) => {
             return res.status(404).json({ error: 'Aktif oturum bulunamadı' });
         }
 
-        // Extend by 10 minutes
+        // Extend by 10 minutes (or whatever logic)
+        // Note: The logic in original code was +10 mins. 
+        const EXTEND_MINUTES = 10;
         const newExpiresAt = new Date();
-        newExpiresAt.setMinutes(newExpiresAt.getMinutes() + 10);
+        newExpiresAt.setMinutes(newExpiresAt.getMinutes() + EXTEND_MINUTES);
 
         const updated = await prisma.session.update({
             where: { id: session.id },
@@ -202,6 +281,26 @@ exports.extend = async (req, res, next) => {
                 lastActivityAt: new Date()
             }
         });
+
+        // Update Redis TTL
+        const cachedSessionStr = await redisClient.get(`session:${token}`);
+        if (cachedSessionStr) {
+            const cachedSession = JSON.parse(cachedSessionStr);
+            cachedSession.expiresAt = newExpiresAt.toISOString();
+
+            // Calculate new TTL in seconds
+            const now = new Date();
+            const ttlSeconds = Math.round((newExpiresAt.getTime() - now.getTime()) / 1000);
+
+            if (ttlSeconds > 0) {
+                await redisClient.set(
+                    `session:${token}`,
+                    JSON.stringify(cachedSession),
+                    'EX',
+                    ttlSeconds
+                );
+            }
+        }
 
         res.json({
             session: {
@@ -215,8 +314,13 @@ exports.extend = async (req, res, next) => {
 
 exports.end = async (req, res, next) => {
     try {
+        const token = req.params.token;
+
+        // Remove from Redis
+        await redisClient.del(`session:${token}`);
+
         const result = await prisma.session.updateMany({
-            where: { sessionToken: req.params.token },
+            where: { sessionToken: token },
             data: { isActive: false }
         });
 
@@ -229,3 +333,4 @@ exports.end = async (req, res, next) => {
         next(error);
     }
 };
+

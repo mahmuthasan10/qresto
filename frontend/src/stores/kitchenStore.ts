@@ -137,15 +137,27 @@ export const useKitchenStore = create<KitchenState>((set, get) => ({
 }));
 
 // Sound helper
-export const playNotificationSound = () => {
+// Sound helper
+export const playNotificationSound = async () => {
     try {
-        const audio = new Audio('/sounds/notification.mp3');
-        audio.volume = 0.5;
-        audio.play().catch(() => {
-            // Browser may block autoplay
-            console.log('Sound blocked by browser');
-        });
+        // Simple "ding" sound in base64 to avoid file dependency issues
+        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(500, audioContext.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(1000, audioContext.currentTime + 0.1);
+
+        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + 0.5);
     } catch (e) {
-        console.log('Sound not available');
+        console.log('Sound playback failed', e);
     }
 };

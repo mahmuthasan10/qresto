@@ -34,11 +34,20 @@ const app = express();
 const httpServer = createServer(app);
 
 // Socket.io setup
+const { createAdapter } = require('@socket.io/redis-adapter');
+const { createRedisClient } = require('./config/redis');
+
+// Socket.io setup
+const pubClient = createRedisClient();
+const subClient = pubClient.duplicate();
+
 const io = new Server(httpServer, {
   cors: {
     origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
-    methods: ['GET', 'POST']
-  }
+    methods: ['GET', 'POST'],
+    credentials: true
+  },
+  adapter: createAdapter(pubClient, subClient)
 });
 
 // Make io accessible to routes
@@ -132,10 +141,12 @@ io.on('connection', (socket) => {
 
 const PORT = process.env.PORT || 3001;
 
-httpServer.listen(PORT, () => {
-  logger.info(`🚀 QResto API Server running on port ${PORT}`);
-  logger.info(`📡 WebSocket server ready`);
-  logger.info(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-});
+if (require.main === module) {
+  httpServer.listen(PORT, () => {
+    logger.info(`🚀 QResto API Server running on port ${PORT}`);
+    logger.info(`📡 WebSocket server ready`);
+    logger.info(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  });
+}
 
 module.exports = { app, io };

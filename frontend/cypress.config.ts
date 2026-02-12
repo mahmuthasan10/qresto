@@ -15,7 +15,7 @@ export default defineConfig({
     },
     env: {
         // Test credentials
-        adminEmail: 'demo@qresto.com',
-        adminPassword: 'demo123',
+        adminEmail: 'admin@qresto.com',
+        adminPassword: '123456',
     },
 });
