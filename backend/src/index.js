@@ -27,22 +27,49 @@ const { logger } = require('./utils/logger');
 const app = express();
 const httpServer = createServer(app);
 
-// Socket.io setup
-const { createAdapter } = require('@socket.io/redis-adapter');
-const { createRedisClient } = require('./config/redis');
-
-// Socket.io setup
-const pubClient = createRedisClient();
-const subClient = pubClient.duplicate();
-
+// Socket.io setup — Redis adapter'ı asenkron bağla, başarısız olursa in-memory kullan
 const io = new Server(httpServer, {
   cors: {
     origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
     methods: ['GET', 'POST'],
     credentials: true
-  },
-  adapter: createAdapter(pubClient, subClient)
+  }
 });
+
+// Redis adapter'ı asenkron olarak bağla (sunucu başlamasını engellemez)
+async function setupRedisAdapter() {
+  try {
+    if (!process.env.REDIS_URL) {
+      logger.info('REDIS_URL not set, using in-memory adapter');
+      return;
+    }
+    const { createAdapter } = require('@socket.io/redis-adapter');
+    const { createRedisClient } = require('./config/redis');
+
+    const pubClient = createRedisClient();
+    const subClient = pubClient.duplicate();
+
+    // Redis bağlantısını bekle (max 5 saniye)
+    await Promise.race([
+      Promise.all([
+        new Promise((resolve, reject) => {
+          pubClient.on('ready', resolve);
+          pubClient.on('error', reject);
+        }),
+        new Promise((resolve, reject) => {
+          subClient.on('ready', resolve);
+          subClient.on('error', reject);
+        })
+      ]),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Redis connection timeout')), 5000))
+    ]);
+
+    io.adapter(createAdapter(pubClient, subClient));
+    logger.info('Socket.io Redis adapter connected');
+  } catch (err) {
+    logger.warn(`Redis adapter failed, using in-memory: ${err.message}`);
+  }
+}
 
 // Make io accessible to routes
 app.set('io', io);
@@ -136,11 +163,15 @@ io.on('connection', (socket) => {
 const PORT = process.env.PORT || 3001;
 
 if (require.main === module) {
-  httpServer.listen(PORT, () => {
-    logger.info(`🚀 QResto API Server running on port ${PORT}`);
-    logger.info(`📡 WebSocket server ready`);
-    logger.info(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  // Redis adapter'ı asenkron bağla, sonra sunucuyu başlat
+  setupRedisAdapter().then(() => {
+    httpServer.listen(PORT, '0.0.0.0', () => {
+      logger.info(`🚀 QResto API Server running on port ${PORT}`);
+      logger.info(`📡 WebSocket server ready`);
+      logger.info(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+    });
   });
 }
 
 module.exports = { app, io };
+
