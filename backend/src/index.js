@@ -1,11 +1,5 @@
 const dotenv = require('dotenv');
 dotenv.config();
-console.log('ENV CHECK:', {
-  NODE_ENV: process.env.NODE_ENV,
-  PORT: process.env.PORT,
-  DATABASE_URL_TYPE: typeof process.env.DATABASE_URL,
-  DATABASE_URL_PREFIX: process.env.DATABASE_URL ? process.env.DATABASE_URL.substring(0, 20) : 'UNDEFINED'
-});
 
 const express = require('express');
 const cors = require('cors');

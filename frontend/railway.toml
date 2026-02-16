@@ -1,0 +1,1 @@
+[build]\nbuilder = "nixpacks"\nbuildCommand = "npm ci && npm run build"\n\n[deploy]\nstartCommand = "node server.js"\nhealthcheckPath = "/"\nhealthcheckTimeout = 100\nrestartPolicyType = "on_failure"\nrestartPolicyMaxRetries = 5\n\n[service]\nname = "qresto-frontend"\n
