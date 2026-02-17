@@ -12,5 +12,8 @@ RUN npx prisma generate
 
 EXPOSE 3001
 
-# db push: migration history gerektirmez, şemayı doğrudan senkronize eder
-CMD ["sh", "-c", "npx prisma db push --skip-generate --accept-data-loss 2>&1 && node src/index.js"]
+# Başlangıç scripti: migration tablosu yoksa baseline oluştur, sonra migrate deploy çalıştır
+COPY docker-entrypoint.sh /app/docker-entrypoint.sh
+RUN chmod +x /app/docker-entrypoint.sh
+
+CMD ["/app/docker-entrypoint.sh"]

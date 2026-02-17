@@ -683,40 +683,40 @@ function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
 ## 📅 HAFTA 8: MUTFAK EKRANI + ENTEGRASYONLAR
 
 #### Mutfak Ekranı (`/kitchen`)
-- [ ] Tam ekran layout (no sidebar)
-- [ ] Üst bar
-  - [ ] Restoran logosu
-  - [ ] Aktif sipariş sayısı
-  - [ ] Son güncelleme zamanı
-  - [ ] Ayarlar ikonu (ses açık/kapalı)
-- [ ] 3 kolon layout (Kanban)
-  - [ ] Yeni Siparişler (kırmızı çerçeve)
-  - [ ] Hazırlananlar (sarı çerçeve)
-  - [ ] Hazırlar (yeşil çerçeve)
-- [ ] Sipariş kartı komponenti
-  - [ ] Sipariş numarası (BÜYÜK)
-  - [ ] Masa numarası
-  - [ ] Zaman (relative, örn: "5 dk önce")
-  - [ ] Ürün listesi
-    - [ ] Ürün adı
-    - [ ] Miktar (BÜYÜK, bold)
-    - [ ] Notlar (highlighted)
-  - [ ] Aksiyon butonları (BÜYÜK, dokunmatik)
-    - [ ] "HAZIRLANIYOR" (yeni → hazırlanan)
-    - [ ] "HAZIR" (hazırlanan → hazır)
-    - [ ] "SERVİS EDİLDİ" (hazır → tamamlanan)
-- [ ] Real-time güncelleme (WebSocket)
-  - [ ] `new_order` - Yeni kart ekleme
-  - [ ] `order_status_updated` - Kart taşıma
-- [ ] Ses efektleri
-  - [ ] Yeni sipariş sesi (notification sound)
-  - [ ] Ses açık/kapalı toggle
-  - [ ] Browser ses izni handling
-- [ ] Auto-refresh fallback (her 30 saniye)
-- [ ] Keyboard shortcuts
-  - [ ] 1-9: Sipariş seçimi
-  - [ ] Enter: Durum ilerletme
-  - [ ] Escape: Seçimi kaldır
+- [x] Tam ekran layout (no sidebar)
+- [x] Üst bar
+  - [x] Restoran logosu
+  - [x] Aktif sipariş sayısı
+  - [x] Son güncelleme zamanı
+  - [x] Ayarlar ikonu (ses açık/kapalı)
+- [x] 3 kolon layout (Kanban)
+  - [x] Yeni Siparişler (kırmızı çerçeve)
+  - [x] Hazırlananlar (sarı çerçeve)
+  - [x] Hazırlar (yeşil çerçeve)
+- [x] Sipariş kartı komponenti
+  - [x] Sipariş numarası (BÜYÜK)
+  - [x] Masa numarası
+  - [x] Zaman (relative, örn: "5 dk önce")
+  - [x] Ürün listesi
+    - [x] Ürün adı
+    - [x] Miktar (BÜYÜK, bold)
+    - [x] Notlar (highlighted)
+  - [x] Aksiyon butonları (BÜYÜK, dokunmatik)
+    - [x] "HAZIRLANIYOR" (yeni → hazırlanan)
+    - [x] "HAZIR" (hazırlanan → hazır)
+    - [x] "SERVİS EDİLDİ" (hazır → tamamlanan)
+- [x] Real-time güncelleme (WebSocket)
+  - [x] `new_order` - Yeni kart ekleme
+  - [x] `order_status_updated` - Kart taşıma
+- [x] Ses efektleri
+  - [x] Yeni sipariş sesi (notification sound)
+  - [x] Ses açık/kapalı toggle
+  - [x] Browser ses izni handling
+- [x] Auto-refresh fallback (her 30 saniye)
+- [x] Keyboard shortcuts
+  - [x] 1-9: Sipariş seçimi
+  - [x] Enter: Durum ilerletme
+  - [x] Escape: Seçimi kaldır
 
 #### Entegrasyonlar
 
@@ -1193,25 +1193,37 @@ function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
 ## 📊 PROJE DURUMU ÖZETİ
 
 ### Tamamlanan
-- [x] Backend proje kurulumu
-- [x] Frontend proje kurulumu (Next.js)
+- [x] Backend proje kurulumu (Express 5.x + Prisma + Socket.io)
+- [x] Frontend proje kurulumu (Next.js 14 App Router + Zustand + Tailwind)
 - [x] Temel klasör yapısı
 - [x] Package.json bağımlılıkları
+- [x] Database schema (8 model, migration'lar hazır)
+- [x] Authentication sistemi (JWT + refresh token)
+- [x] Tüm API endpoint'leri (9 controller, 9 route)
+- [x] Müşteri arayüzü (menü, sepet, sipariş takip)
+- [x] Admin paneli (dashboard, menü, masa, sipariş, ayarlar, ikram yönetimi)
+- [x] Mutfak ekranı (Kanban, drag-drop, ses bildirimi, klavye kısayolları)
+- [x] Socket.io gerçek zamanlı entegrasyon
+- [x] PWA desteği (manifest, service worker, offline sayfa)
+- [x] Docker yapılandırması (PostgreSQL + Redis + Backend + Frontend)
+- [x] Railway deployment config'leri
+- [x] Kayıt sayfası (/admin/register)
+- [x] Landing page
 
-### Devam Eden
-- [/] Prisma schema (tanımlanacak)
-- [/] API endpoint'leri (temel yapı var)
+### Devam Eden / Eksik
+- [ ] Cloudinary resim upload UI entegrasyonu
+- [ ] Email gönderme servisi (şifre sıfırlama vb.)
+- [ ] Kapsamlı test coverage (>80%)
+- [ ] API dokümantasyonu (Swagger/OpenAPI)
+- [ ] Abonelik/ödeme sistemi (Faz 2)
 
-### Başlanmamış
-- [ ] Database migration
-- [ ] Authentication sistemi
-- [ ] Müşteri arayüzü
-- [ ] Admin paneli
-- [ ] Mutfak ekranı
-- [ ] Testler
-- [ ] Beta test
-- [ ] Production deployment
+### Başlanmamış (Faz 2)
+- [ ] Detaylı analitik dashboard
+- [ ] Sadakat programı
+- [ ] Çoklu dil desteği
+- [ ] Load testing
+- [ ] Sentry monitoring
 
 ---
 
-*Son güncelleme: 2026-02-08*
+*Son güncelleme: 2026-02-17*

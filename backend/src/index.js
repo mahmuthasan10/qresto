@@ -27,13 +27,17 @@ const { logger } = require('./utils/logger');
 const app = express();
 const httpServer = createServer(app);
 
+// CORS origin ayarı: '*' ise tüm origin'lere izin ver (credentials ile uyumlu)
+const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:3000';
+const corsConfig = {
+  origin: corsOrigin === '*' ? true : corsOrigin,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  credentials: true
+};
+
 // Socket.io setup — Redis adapter'ı asenkron bağla, başarısız olursa in-memory kullan
 const io = new Server(httpServer, {
-  cors: {
-    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
-    methods: ['GET', 'POST'],
-    credentials: true
-  }
+  cors: corsConfig
 });
 
 // Redis adapter'ı asenkron olarak bağla (sunucu başlamasını engellemez)
@@ -80,10 +84,7 @@ app.set('io', io);
 app.use(helmet());
 
 // CORS
-app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
-  credentials: true
-}));
+app.use(cors(corsConfig));
 
 // Rate limiting
 const limiter = rateLimit({

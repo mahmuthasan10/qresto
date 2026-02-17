@@ -1,0 +1,8 @@
+# Auto detect text files and normalize line endings
+* text=auto
+
+# Shell scripts must use LF (Unix) line endings for Docker/Linux
+*.sh text eol=lf
+
+# Prisma migration files
+*.sql text eol=lf

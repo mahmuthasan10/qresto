@@ -46,13 +46,13 @@ services:
     environment:
       DATABASE_URL: postgresql://qresto:qresto123@postgres:5432/qresto_db
       REDIS_URL: redis://redis:6379
-      JWT_SECRET: dev-jwt-secret-change-in-production-min-32-chars
-      JWT_EXPIRES_IN: 15m
-      JWT_REFRESH_SECRET: dev-refresh-secret-change-in-production
-      JWT_REFRESH_EXPIRES_IN: 7d
+      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-change-in-production-min-32-chars}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-15m}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-dev-refresh-secret-change-in-production}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
       PORT: 3001
-      NODE_ENV: production
-      CORS_ORIGIN: http://localhost:3000
+      NODE_ENV: ${NODE_ENV:-production}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
     ports:
       - "3001:3001"
     depends_on:
@@ -66,16 +66,21 @@ services:
       timeout: 10s
       retries: 3
 
-  # Frontend (Optional - for production testing)
+  # Frontend
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001/api/v1}
+        NEXT_PUBLIC_SOCKET_URL: ${NEXT_PUBLIC_SOCKET_URL:-http://localhost:3001}
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
     container_name: qresto-web
     restart: unless-stopped
     environment:
-      NEXT_PUBLIC_API_URL: http://localhost:3001/api/v1
-      NEXT_PUBLIC_SOCKET_URL: http://localhost:3001
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001/api/v1}
+      NEXT_PUBLIC_SOCKET_URL: ${NEXT_PUBLIC_SOCKET_URL:-http://localhost:3001}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
     ports:
       - "3000:3000"
     depends_on:
