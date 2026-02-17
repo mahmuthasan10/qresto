@@ -5,13 +5,12 @@ RUN apt-get update -y && apt-get install -y openssl wget && rm -rf /var/lib/apt/
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci --omit=dev
+RUN npm ci
 
 COPY . .
 RUN npx prisma generate
 
 EXPOSE 3001
 
-# 1) Migration'ları uygula (başarısız olsa bile devam et)
-# 2) Sunucuyu başlat
-CMD ["sh", "-c", "(npx prisma migrate deploy 2>&1 || echo 'Migration warning - continuing...') && node src/index.js"]
+# db push: migration history gerektirmez, şemayı doğrudan senkronize eder
+CMD ["sh", "-c", "npx prisma db push --skip-generate --accept-data-loss 2>&1 && node src/index.js"]
