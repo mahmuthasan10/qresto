@@ -4,6 +4,7 @@ const Joi = require('joi');
 const prisma = require('../config/database');
 const { v4: uuidv4 } = require('uuid');
 const { logger } = require('../utils/logger');
+const emailService = require('../services/email.service');
 
 // Validation schemas
 const registerSchema = Joi.object({
@@ -108,6 +109,9 @@ exports.register = async (req, res, next) => {
 
         // Generate tokens
         const { accessToken, refreshToken } = generateTokens(restaurant.id);
+
+        // Send welcome email (non-blocking)
+        emailService.sendWelcome(email, name).catch(() => {});
 
         res.status(201).json({
             message: 'Kayıt başarılı',
@@ -242,10 +246,13 @@ exports.forgotPassword = async (req, res, next) => {
             const resetUrl = `${frontendUrl}/admin/reset-password?token=${resetToken}`;
 
             logger.info(`Password reset requested for: ${email}`);
-            logger.info(`Reset URL: ${resetUrl}`);
 
-            // TODO: Send email with resetUrl when email service is configured
-            // For now, log the URL so it can be used manually
+            // Send reset email
+            const emailSent = await emailService.sendPasswordReset(email, resetUrl, restaurant.name);
+            if (!emailSent) {
+                logger.warn(`Password reset email could not be sent to: ${email}`);
+                logger.info(`Reset URL (fallback): ${resetUrl}`);
+            }
         }
 
         res.json({
