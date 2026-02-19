@@ -1,6 +1,6 @@
 const prisma = require('../config/database');
 const Joi = require('joi');
-const ImageService = require('../services/image.service');
+const CloudinaryService = require('../services/cloudinary.service');
 
 const menuItemSchema = Joi.object({
     categoryId: Joi.number().integer().optional().allow(null),
@@ -191,12 +191,6 @@ exports.toggleFeatured = async (req, res, next) => {
     }
 };
 
-
-
-// ... existing imports ...
-
-// ... inside handler ...
-
 exports.uploadImage = async (req, res, next) => {
     try {
         if (!req.file) {
@@ -211,12 +205,16 @@ exports.uploadImage = async (req, res, next) => {
             return res.status(404).json({ error: 'Ürün bulunamadı' });
         }
 
-        // Upload to Cloudflare R2
-        const imageUrl = await ImageService.uploadImage(req.file.buffer, `restaurants/${req.restaurantId}/menu`);
+        // Upload to Cloudinary
+        const result = await CloudinaryService.uploadImage(req.file.buffer, `qresto/restaurants/${req.restaurantId}/menu`);
+        const imageUrl = result.secure_url;
 
         // If there was an old image, try to delete it
         if (menuItem.imageUrl) {
-            await ImageService.deleteImage(menuItem.imageUrl);
+            const oldPublicId = CloudinaryService.getPublicIdFromUrl(menuItem.imageUrl);
+            if (oldPublicId) {
+                await CloudinaryService.deleteImage(oldPublicId).catch(() => {});
+            }
         }
 
         // Update database
@@ -245,7 +243,10 @@ exports.deleteImage = async (req, res, next) => {
         }
 
         if (menuItem.imageUrl) {
-            await ImageService.deleteImage(menuItem.imageUrl);
+            const publicId = CloudinaryService.getPublicIdFromUrl(menuItem.imageUrl);
+            if (publicId) {
+                await CloudinaryService.deleteImage(publicId).catch(() => {});
+            }
         }
 
         await prisma.menuItem.update({

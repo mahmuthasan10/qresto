@@ -48,11 +48,16 @@ class CloudinaryService {
      */
     static getPublicIdFromUrl(url) {
         try {
-            const parts = url.split('/');
-            const filename = parts[parts.length - 1];
-            const publicId = filename.split('.')[0];
-            const folder = parts[parts.length - 2];
-            return `${folder}/${publicId}`; // Basic extraction, might need adjustment based on folder structure
+            // Extract public_id from Cloudinary URL
+            // URL format: https://res.cloudinary.com/cloud/image/upload/v1234/folder/subfolder/filename.ext
+            const uploadIndex = url.indexOf('/upload/');
+            if (uploadIndex === -1) return null;
+            const afterUpload = url.substring(uploadIndex + 8); // skip '/upload/'
+            // Remove version prefix if present (v123456789/)
+            const withoutVersion = afterUpload.replace(/^v\d+\//, '');
+            // Remove file extension
+            const publicId = withoutVersion.replace(/\.[^/.]+$/, '');
+            return publicId;
         } catch (error) {
             return null;
         }

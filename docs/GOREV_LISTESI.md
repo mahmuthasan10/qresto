@@ -1245,7 +1245,7 @@ Aşağıdaki görevler kod incelemesi sırasında tespit edilmiş, orijinal plan
 - [x] Şifre sıfırlama sayfası oluşturma (`/admin/forgot-password` + `/admin/reset-password`)
 - [x] Backend forgot/reset password gerçek token mantığı (DB'de resetToken alanı + 1 saat expiry)
 - [x] PWA ikonları oluşturma (8 boyut: 72px → 512px + favicon)
-- [ ] `FRONTEND_URL` env var'ını Railway backend'e ekleme
+- [x] `FRONTEND_URL` env var'ını Railway backend'e ekleme
 
 ### 🖼️ Görsel / Upload Sistemi
 - [ ] Cloudinary hesabı açma
@@ -1261,7 +1261,7 @@ Aşağıdaki görevler kod incelemesi sırasında tespit edilmiş, orijinal plan
 - [ ] Hoş geldin email şablonu
 
 ### 🔒 Güvenlik
-- [ ] JWT secret'ları daha güçlü rastgele string yapma (min 64 karakter)
+- [x] JWT secret'ları daha güçlü rastgele string yapma (128 karakter, crypto.randomBytes)
 - [ ] Rate limiting prod ayarları (login endpoint'i için daha sıkı)
 - [ ] Input sanitization kontrolü (XSS)
 - [ ] Helmet CSP ayarları sıkılaştırma

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useMenuStore } from '@/stores/menuStore';
 import { Button, Input, Card, CardBody, CardHeader, Badge, Modal, Textarea } from '@/components/ui';
 import {
@@ -12,7 +12,10 @@ import {
     Search,
     ToggleLeft,
     ToggleRight,
-    Image as ImageIcon
+    Image as ImageIcon,
+    Upload,
+    X,
+    Loader2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -48,6 +51,8 @@ export default function MenuPage() {
         updateMenuItem,
         deleteMenuItem,
         toggleItemAvailability,
+        uploadMenuItemImage,
+        deleteMenuItemImage,
     } = useMenuStore();
 
     const [searchTerm, setSearchTerm] = useState('');
@@ -80,6 +85,10 @@ export default function MenuPage() {
     // Delete confirmation
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState<{ type: 'category' | 'item'; id: number; name: string } | null>(null);
+
+    // Image upload
+    const [uploadingImageId, setUploadingImageId] = useState<number | null>(null);
+    const imageInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         fetchCategories();
@@ -228,6 +237,43 @@ export default function MenuPage() {
         }
     };
 
+    const handleImageUpload = (itemId: number) => {
+        setUploadingImageId(itemId);
+        imageInputRef.current?.click();
+    };
+
+    const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !uploadingImageId) return;
+
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error('Dosya boyutu 5MB\'dan küçük olmalı');
+            return;
+        }
+        if (!file.type.startsWith('image/')) {
+            toast.error('Sadece resim dosyaları yüklenebilir');
+            return;
+        }
+
+        const success = await uploadMenuItemImage(uploadingImageId, file);
+        if (success) {
+            toast.success('Resim yüklendi');
+        } else {
+            toast.error('Resim yüklenemedi');
+        }
+        setUploadingImageId(null);
+        if (imageInputRef.current) imageInputRef.current.value = '';
+    };
+
+    const handleImageDelete = async (itemId: number) => {
+        const success = await deleteMenuItemImage(itemId);
+        if (success) {
+            toast.success('Resim silindi');
+        } else {
+            toast.error('Resim silinemedi');
+        }
+    };
+
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('tr-TR', {
             style: 'currency',
@@ -270,6 +316,15 @@ export default function MenuPage() {
                     className="pl-10"
                 />
             </div>
+
+            {/* Hidden file input for image upload */}
+            <input
+                ref={imageInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageFileChange}
+                className="hidden"
+            />
 
             {/* Categories & Items */}
             <div className="space-y-4">
@@ -348,15 +403,29 @@ export default function MenuPage() {
                                                             }`}
                                                     >
                                                         <div className="flex items-center gap-4">
-                                                            <div className="w-14 h-14 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
-                                                                {item.imageUrl ? (
-                                                                    <img
-                                                                        src={item.imageUrl}
-                                                                        alt={item.name}
-                                                                        className="w-full h-full object-cover"
-                                                                    />
+                                                            <div
+                                                                className="w-14 h-14 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden relative group cursor-pointer"
+                                                                onClick={() => handleImageUpload(item.id)}
+                                                                title={item.imageUrl ? 'Resmi değiştir' : 'Resim yükle'}
+                                                            >
+                                                                {uploadingImageId === item.id ? (
+                                                                    <Loader2 className="w-6 h-6 text-orange-500 animate-spin" />
+                                                                ) : item.imageUrl ? (
+                                                                    <>
+                                                                        <img
+                                                                            src={item.imageUrl}
+                                                                            alt={item.name}
+                                                                            className="w-full h-full object-cover"
+                                                                        />
+                                                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                                            <Upload className="w-4 h-4 text-white" />
+                                                                        </div>
+                                                                    </>
                                                                 ) : (
-                                                                    <ImageIcon className="w-6 h-6 text-gray-300" />
+                                                                    <div className="flex flex-col items-center gap-0.5 group-hover:text-orange-500 transition-colors">
+                                                                        <Upload className="w-5 h-5 text-gray-300 group-hover:text-orange-500" />
+                                                                        <span className="text-[9px] text-gray-300 group-hover:text-orange-500">Yükle</span>
+                                                                    </div>
                                                                 )}
                                                             </div>
                                                             <div>
@@ -380,6 +449,15 @@ export default function MenuPage() {
                                                             </div>
                                                         </div>
                                                         <div className="flex items-center gap-2">
+                                                            {item.imageUrl && (
+                                                                <button
+                                                                    onClick={() => handleImageDelete(item.id)}
+                                                                    className="p-2 hover:bg-red-50 rounded-lg"
+                                                                    title="Resmi sil"
+                                                                >
+                                                                    <X className="w-4 h-4 text-red-400" />
+                                                                </button>
+                                                            )}
                                                             <button
                                                                 onClick={() => handleToggleAvailability(item.id)}
                                                                 className="p-2 hover:bg-gray-100 rounded-lg"

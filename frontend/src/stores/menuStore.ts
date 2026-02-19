@@ -45,6 +45,8 @@ interface MenuState {
     updateMenuItem: (id: number, data: Partial<MenuItem>) => Promise<boolean>;
     deleteMenuItem: (id: number) => Promise<boolean>;
     toggleItemAvailability: (id: number) => Promise<boolean>;
+    uploadMenuItemImage: (id: number, file: File) => Promise<boolean>;
+    deleteMenuItemImage: (id: number) => Promise<boolean>;
     setSelectedCategory: (id: number | null) => void;
     clearError: () => void;
 }
@@ -221,6 +223,47 @@ export const useMenuStore = create<MenuState>((set, get) => ({
             const error = unknownError as AxiosError<{ error: string }>;
             set({
                 error: error.response?.data?.error || 'Durum değiştirilirken hata oluştu',
+            });
+            return false;
+        }
+    },
+
+    uploadMenuItemImage: async (id, file) => {
+        try {
+            const formData = new FormData();
+            formData.append('image', file);
+            const response = await api.post(`/menu-items/${id}/image`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+            });
+            const imageUrl = response.data.imageUrl;
+            set(state => ({
+                menuItems: state.menuItems.map(item =>
+                    item.id === id ? { ...item, imageUrl } : item
+                ),
+            }));
+            return true;
+        } catch (unknownError) {
+            const error = unknownError as AxiosError<{ error: string }>;
+            set({
+                error: error.response?.data?.error || 'Resim yüklenirken hata oluştu',
+            });
+            return false;
+        }
+    },
+
+    deleteMenuItemImage: async (id) => {
+        try {
+            await api.delete(`/menu-items/${id}/image`);
+            set(state => ({
+                menuItems: state.menuItems.map(item =>
+                    item.id === id ? { ...item, imageUrl: undefined } : item
+                ),
+            }));
+            return true;
+        } catch (unknownError) {
+            const error = unknownError as AxiosError<{ error: string }>;
+            set({
+                error: error.response?.data?.error || 'Resim silinirken hata oluştu',
             });
             return false;
         }
