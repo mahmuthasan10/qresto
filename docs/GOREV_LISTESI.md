@@ -1216,7 +1216,7 @@ function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
 
 ### Devam Eden / Eksik
 - [x] Şifre sıfırlama frontend sayfası (/admin/forgot-password + /admin/reset-password)\n- [x] Backend şifre sıfırlama token mantığı (resetToken + resetTokenExpiry DB alanları)
-- [ ] PWA ikonları — manifest var ama public/icons/ klasörü boş
+- [x] PWA ikonları — manifest var ve public/icons/ dosyaları oluşturuldu
 - [ ] Cloudinary hesabı + env var'ları — backend kodu hazır, hesap/credentials eksik
 - [ ] Email gönderme servisi (şifre sıfırlama, hoş geldin maili)
 - [ ] Test coverage artırma (>80%)
@@ -1244,7 +1244,7 @@ Aşağıdaki görevler kod incelemesi sırasında tespit edilmiş, orijinal plan
 - [x] Copyright yılı 2024 → 2026 güncellendi
 - [x] Şifre sıfırlama sayfası oluşturma (`/admin/forgot-password` + `/admin/reset-password`)
 - [x] Backend forgot/reset password gerçek token mantığı (DB'de resetToken alanı + 1 saat expiry)
-- [ ] PWA ikonları oluşturma (8 boyut: 72px → 512px)
+- [x] PWA ikonları oluşturma (8 boyut: 72px → 512px + favicon)
 - [ ] `FRONTEND_URL` env var'ını Railway backend'e ekleme
 
 ### 🖼️ Görsel / Upload Sistemi
