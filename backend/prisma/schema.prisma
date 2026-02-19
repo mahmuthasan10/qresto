@@ -29,6 +29,8 @@ model Restaurant {
   isActive           Boolean   @default(true) @map("is_active")
   subscriptionPlan   String    @default("starter") @map("subscription_plan") @db.VarChar(50)
   subscriptionExpiresAt DateTime? @map("subscription_expires_at")
+  resetToken         String?   @unique @map("reset_token") @db.VarChar(500)
+  resetTokenExpiry   DateTime? @map("reset_token_expiry")
   createdAt          DateTime  @default(now()) @map("created_at")
   updatedAt          DateTime  @updatedAt @map("updated_at")
 

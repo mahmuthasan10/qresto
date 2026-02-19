@@ -217,20 +217,40 @@ exports.forgotPassword = async (req, res, next) => {
     try {
         const { email } = req.body;
 
+        if (!email) {
+            return res.status(400).json({ error: 'Email adresi gerekli' });
+        }
+
         const restaurant = await prisma.restaurant.findUnique({
             where: { email }
         });
 
-        // Always return success for security
+        // Always return success for security (don't reveal if email exists)
+        if (restaurant) {
+            // Generate a secure reset token
+            const crypto = require('crypto');
+            const resetToken = crypto.randomBytes(32).toString('hex');
+            const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+            await prisma.restaurant.update({
+                where: { id: restaurant.id },
+                data: { resetToken, resetTokenExpiry }
+            });
+
+            // Build reset URL
+            const frontendUrl = process.env.FRONTEND_URL || process.env.CORS_ORIGIN || 'http://localhost:3000';
+            const resetUrl = `${frontendUrl}/admin/reset-password?token=${resetToken}`;
+
+            logger.info(`Password reset requested for: ${email}`);
+            logger.info(`Reset URL: ${resetUrl}`);
+
+            // TODO: Send email with resetUrl when email service is configured
+            // For now, log the URL so it can be used manually
+        }
+
         res.json({
             message: 'Eğer bu email kayıtlıysa, şifre sıfırlama bağlantısı gönderilecektir'
         });
-
-        // TODO: Send email with reset link
-        if (restaurant) {
-            // Generate reset token and send email
-            logger.info('Password reset requested for: ' + email);
-        }
     } catch (error) {
         next(error);
     }
@@ -240,7 +260,40 @@ exports.resetPassword = async (req, res, next) => {
     try {
         const { token, newPassword } = req.body;
 
-        // TODO: Implement password reset with token verification
+        if (!token || !newPassword) {
+            return res.status(400).json({ error: 'Token ve yeni şifre gerekli' });
+        }
+
+        if (newPassword.length < 6) {
+            return res.status(400).json({ error: 'Şifre en az 6 karakter olmalı' });
+        }
+
+        // Find restaurant by reset token
+        const restaurant = await prisma.restaurant.findFirst({
+            where: {
+                resetToken: token,
+                resetTokenExpiry: { gt: new Date() }
+            }
+        });
+
+        if (!restaurant) {
+            return res.status(400).json({ error: 'Geçersiz veya süresi dolmuş token' });
+        }
+
+        // Hash new password and clear reset token
+        const passwordHash = await bcrypt.hash(newPassword, 12);
+
+        await prisma.restaurant.update({
+            where: { id: restaurant.id },
+            data: {
+                passwordHash,
+                resetToken: null,
+                resetTokenExpiry: null
+            }
+        });
+
+        logger.info(`Password reset completed for: ${restaurant.email}`);
+
         res.json({
             message: 'Şifre başarıyla değiştirildi'
         });

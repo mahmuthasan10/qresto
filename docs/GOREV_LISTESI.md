@@ -1215,7 +1215,7 @@ function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
 - [x] Sipariş takip sayfası (/order/[orderNumber])
 
 ### Devam Eden / Eksik
-- [ ] Şifre sıfırlama frontend sayfası (/admin/forgot-password) — backend API hazır, frontend sayfası yok
+- [x] Şifre sıfırlama frontend sayfası (/admin/forgot-password + /admin/reset-password)\n- [x] Backend şifre sıfırlama token mantığı (resetToken + resetTokenExpiry DB alanları)
 - [ ] PWA ikonları — manifest var ama public/icons/ klasörü boş
 - [ ] Cloudinary hesabı + env var'ları — backend kodu hazır, hesap/credentials eksik
 - [ ] Email gönderme servisi (şifre sıfırlama, hoş geldin maili)
@@ -1242,7 +1242,8 @@ Aşağıdaki görevler kod incelemesi sırasında tespit edilmiş, orijinal plan
 - [x] QR kod URL'lerinde localhost yerine prod URL kullanılması (CORS_ORIGIN fallback eklendi)
 - [x] Test endpoint'inde hardcoded localhost düzeltildi
 - [x] Copyright yılı 2024 → 2026 güncellendi
-- [ ] Şifre sıfırlama sayfası oluşturma (`/admin/forgot-password`)
+- [x] Şifre sıfırlama sayfası oluşturma (`/admin/forgot-password` + `/admin/reset-password`)
+- [x] Backend forgot/reset password gerçek token mantığı (DB'de resetToken alanı + 1 saat expiry)
 - [ ] PWA ikonları oluşturma (8 boyut: 72px → 512px)
 - [ ] `FRONTEND_URL` env var'ını Railway backend'e ekleme
 
