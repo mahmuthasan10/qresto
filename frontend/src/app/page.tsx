@@ -187,7 +187,7 @@ export default function HomePage() {
               <span className="text-xl font-bold text-white">QResto</span>
             </div>
             <p className="text-gray-500 text-sm">
-              © 2024 QResto. Tüm hakları saklıdır.
+              © 2026 QResto. Tüm hakları saklıdır.
             </p>
           </div>
         </div>

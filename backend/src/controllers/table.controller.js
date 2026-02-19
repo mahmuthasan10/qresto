@@ -154,7 +154,7 @@ exports.getQRCode = async (req, res, next) => {
         }
 
         // Generate QR code URL
-        const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+        const baseUrl = process.env.FRONTEND_URL || process.env.CORS_ORIGIN || 'http://localhost:3000';
         const qrUrl = `${baseUrl}/menu/${table.qrCode}`;
 
         res.json({

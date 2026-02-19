@@ -88,9 +88,10 @@ router.post('/debug/seed-test', async (req, res, next) => {
             });
         }
 
+        const frontendUrl = process.env.FRONTEND_URL || process.env.CORS_ORIGIN || 'http://localhost:3000';
         res.json({ 
             message: 'Test verisi oluşturuldu!',
-            testUrl: `http://localhost:3000/menu/test-qr-123`
+            testUrl: `${frontendUrl}/menu/test-qr-123`
         });
     } catch (err) {
         next(err);

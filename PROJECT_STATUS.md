@@ -132,9 +132,11 @@ Bu hafta sistemin eksik parçaları tamamlanıyor ve test ediliyor.
 Sistemi gerçek bir ortamda denemeye başlıyoruz.
 
 #### 9. Hafta: Pilot Kurulum
-*   [ ] **Production Ortamı Hazırlığı:**
-    *   Railway veya benzeri bir serviste canlı veritabanı (PostgreSQL) ve sunucu kurulumu.
-    *   Domain yönlendirmesi (örn: `app.qresto.com`).
+*   [x] **Production Ortamı Hazırlığı:**
+    *   Railway'de canlı veritabanı (PostgreSQL), Redis, Backend ve Frontend servisleri kuruldu.
+    *   Backend: `https://qresto-backend-production.up.railway.app`
+    *   Frontend: `https://qresto-frontend-production.up.railway.app`
+    *   Domain yönlendirmesi henüz yapılmadı (örn: `app.qresto.com`).
 *   [ ] **Pilot Restoran Seçimi:**
     *   Sistemi deneyecek 1-2 pilot restoranın veya test ortamının belirlenmesi.
 *   [ ] **Veri Girişi:**

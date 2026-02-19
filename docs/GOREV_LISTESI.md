@@ -220,8 +220,9 @@
 - [x] PATCH `/api/v1/categories/reorder`
 
 #### Test Yazımı
-- [ ] Jest yapılandırması
-- [ ] Auth endpoint testleri
+- [x] Jest yapılandırması
+- [x] Auth endpoint testleri
+- [x] Public endpoint testleri
 - [ ] Restaurant endpoint testleri
 - [ ] Category endpoint testleri
 
@@ -741,35 +742,35 @@ function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
 - [ ] Error handling ve retry
 
 ##### WebSocket Tam Entegrasyonu
-- [ ] Tüm event'lerin test edilmesi
-- [ ] Connection durumu UI
-- [ ] Reconnection logic
-- [ ] Heartbeat/ping-pong
+- [x] Tüm event'lerin test edilmesi
+- [x] Connection durumu UI (ConnectionIndicator component)
+- [x] Reconnection logic (10 attempts, exponential backoff)
+- [x] Heartbeat/ping-pong (25s interval)
 
 #### End-to-End Testing (Cypress)
-- [ ] Cypress kurulumu
-- [ ] Test senaryoları
-  - [ ] Müşteri akışı
-    - [ ] QR okutma simulasyonu
-    - [ ] Menü görüntüleme
-    - [ ] Sepete ekleme
-    - [ ] Sipariş gönderme
-    - [ ] Sipariş takibi
-  - [ ] Admin akışı
-    - [ ] Login
-    - [ ] Menü ekleme/düzenleme
-    - [ ] Masa oluşturma
+- [x] Cypress kurulumu
+- [x] Test senaryoları
+  - [x] Müşteri akışı
+    - [x] QR okutma simulasyonu
+    - [x] Menü görüntüleme
+    - [x] Sepete ekleme
+    - [x] Sipariş gönderme
+    - [x] Sipariş takibi
+  - [x] Admin akışı
+    - [x] Login
+    - [x] Menü ekleme/düzenleme
+    - [x] Masa oluşturma
     - [ ] QR indirme
-    - [ ] Sipariş onaylama
-  - [ ] Mutfak akışı
-    - [ ] Sipariş işleme
-    - [ ] Durum güncelleme
+    - [x] Sipariş onaylama
+  - [x] Mutfak akışı
+    - [x] Sipariş işleme
+    - [x] Durum güncelleme
 - [ ] CI/CD entegrasyonu
 
 **Çıktılar:**
-- [ ] Tüm sistemler entegre
-- [ ] E2E testler yazılmış
-- [ ] Cloudinary entegrasyonu çalışıyor
+- [x] Tüm sistemler entegre
+- [x] E2E testler yazılmış (5 test dosyası)
+- [ ] Cloudinary entegrasyonu çalışıyor (backend hazır, env var eksik)
 - [ ] Email sistemi hazır
 
 ---
@@ -779,12 +780,12 @@ function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
 ### Hafta 9 - Pilot Kurulum
 
 #### Production Environment
-- [ ] Railway projesi oluşturma
-- [ ] PostgreSQL instance oluşturma
-- [ ] Environment variables ayarlama
+- [x] Railway projesi oluşturma
+- [x] PostgreSQL instance oluşturma
+- [x] Environment variables ayarlama
 - [ ] Domain bağlama (subdomain)
-- [ ] SSL sertifikası (otomatik)
-- [ ] Deployment script
+- [x] SSL sertifikası (otomatik)
+- [x] Deployment script (Dockerfile + railway.toml)
 
 #### Pilot Restoran Anlaşması
 - [ ] 3 pilot restoran belirleme
@@ -1045,12 +1046,12 @@ function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
 ## 📋 HESAP VE SERVİS KURULUMU
 
 ### Hosting & Database
-- [ ] Railway hesabı oluşturma
-- [ ] Railway projeleri oluşturma
-  - [ ] Backend service
-  - [ ] PostgreSQL database
-  - [ ] Redis (opsiyonel - ileride)
-- [ ] Connection string alma
+- [x] Railway hesabı oluşturma
+- [x] Railway projeleri oluşturma
+  - [x] Backend service (qresto-backend)
+  - [x] PostgreSQL database
+  - [x] Redis
+- [x] Connection string alma
 - [ ] Backup ayarları
 
 ### Dosya Depolama
@@ -1082,10 +1083,8 @@ function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
 - [ ] Sender authentication
 
 ### Version Control & CI/CD
-- [ ] GitHub repository oluşturma
-  - [ ] qresto-backend
-  - [ ] qresto-frontend
-  - [ ] (veya monorepo)
+- [x] GitHub repository oluşturma
+  - [x] Monorepo yapısı (qresto)
 - [ ] Branch strategy (main, develop, feature/*)
 - [ ] GitHub Actions workflow
   - [ ] Lint on PR
@@ -1194,7 +1193,7 @@ function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
 
 ### Tamamlanan
 - [x] Backend proje kurulumu (Express 5.x + Prisma + Socket.io)
-- [x] Frontend proje kurulumu (Next.js 14 App Router + Zustand + Tailwind)
+- [x] Frontend proje kurulumu (Next.js 16 App Router + Zustand + Tailwind 4)
 - [x] Temel klasör yapısı
 - [x] Package.json bağımlılıkları
 - [x] Database schema (8 model, migration'lar hazır)
@@ -1206,16 +1205,24 @@ function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
 - [x] Socket.io gerçek zamanlı entegrasyon
 - [x] PWA desteği (manifest, service worker, offline sayfa)
 - [x] Docker yapılandırması (PostgreSQL + Redis + Backend + Frontend)
-- [x] Railway deployment config'leri
+- [x] Railway deployment (Backend + Frontend + PostgreSQL + Redis canlı)
 - [x] Kayıt sayfası (/admin/register)
-- [x] Landing page
+- [x] Landing page + Demo sayfası
+- [x] Cypress E2E testleri (5 test dosyası)
+- [x] Jest birim testleri (auth, public)
+- [x] WebSocket tam entegrasyon (connection indicator, heartbeat, reconnection)
+- [x] İkram (Treat) sistemi (backend + frontend)
+- [x] Sipariş takip sayfası (/order/[orderNumber])
 
 ### Devam Eden / Eksik
-- [ ] Cloudinary resim upload UI entegrasyonu
-- [ ] Email gönderme servisi (şifre sıfırlama vb.)
-- [ ] Kapsamlı test coverage (>80%)
+- [ ] Şifre sıfırlama frontend sayfası (/admin/forgot-password) — backend API hazır, frontend sayfası yok
+- [ ] PWA ikonları — manifest var ama public/icons/ klasörü boş
+- [ ] Cloudinary hesabı + env var'ları — backend kodu hazır, hesap/credentials eksik
+- [ ] Email gönderme servisi (şifre sıfırlama, hoş geldin maili)
+- [ ] Test coverage artırma (>80%)
 - [ ] API dokümantasyonu (Swagger/OpenAPI)
-- [ ] Abonelik/ödeme sistemi (Faz 2)
+- [ ] Custom domain bağlama (örn: app.qresto.com)
+- [ ] FRONTEND_URL env var'ı Railway'e ekleme
 
 ### Başlanmamış (Faz 2)
 - [ ] Detaylı analitik dashboard
@@ -1223,7 +1230,48 @@ function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
 - [ ] Çoklu dil desteği
 - [ ] Load testing
 - [ ] Sentry monitoring
+- [ ] Abonelik/ödeme sistemi
 
 ---
 
-*Son güncelleme: 2026-02-17*
+## 🆕 EK GÖREVLER (Tespit Edilen)
+
+Aşağıdaki görevler kod incelemesi sırasında tespit edilmiş, orijinal planda olmayan ama gerekli olan işlerdir.
+
+### 🔧 Kritik Düzeltmeler
+- [x] QR kod URL'lerinde localhost yerine prod URL kullanılması (CORS_ORIGIN fallback eklendi)
+- [x] Test endpoint'inde hardcoded localhost düzeltildi
+- [x] Copyright yılı 2024 → 2026 güncellendi
+- [ ] Şifre sıfırlama sayfası oluşturma (`/admin/forgot-password`)
+- [ ] PWA ikonları oluşturma (8 boyut: 72px → 512px)
+- [ ] `FRONTEND_URL` env var'ını Railway backend'e ekleme
+
+### 🖼️ Görsel / Upload Sistemi
+- [ ] Cloudinary hesabı açma
+- [ ] `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` env var ekleme
+- [ ] Admin panelde menü ürünü resim upload test etme
+- [ ] Resim upload hata durumu UI
+
+### 📧 Email Sistemi
+- [ ] Email servis sağlayıcı seçimi (SendGrid / Resend / Mailgun)
+- [ ] Hesap oluşturma + domain doğrulama
+- [ ] Backend'de email gönderim servisi yazma
+- [ ] Şifre sıfırlama email şablonu
+- [ ] Hoş geldin email şablonu
+
+### 🔒 Güvenlik
+- [ ] JWT secret'ları daha güçlü rastgele string yapma (min 64 karakter)
+- [ ] Rate limiting prod ayarları (login endpoint'i için daha sıkı)
+- [ ] Input sanitization kontrolü (XSS)
+- [ ] Helmet CSP ayarları sıkılaştırma
+
+### 📊 Monitoring & Logging
+- [ ] Sentry hesabı oluşturma
+- [ ] Backend Sentry entegrasyonu
+- [ ] Frontend Sentry entegrasyonu
+- [ ] UptimeRobot ile uptime izleme
+- [ ] Railway log'larını periyodik kontrol
+
+---
+
+*Son güncelleme: 2026-02-19*
