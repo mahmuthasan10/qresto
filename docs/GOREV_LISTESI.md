@@ -575,8 +575,8 @@ function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
     - [x] Aktif/Pasif toggle
     - [x] Düzenle/Sil butonları
   - [x] Ürün ekleme/düzenleme modal
-    - [ ] Resim upload (react-dropzone)
-    - [ ] Resim önizleme
+    - [x] Resim upload (tıkla-yükle, backend Cloudinary API)
+    - [x] Resim önizleme
     - [x] İsim (TR + EN)
     - [x] Açıklama (TR + EN)
     - [x] Kategori seçimi (dropdown)
@@ -722,24 +722,24 @@ function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
 #### Entegrasyonlar
 
 ##### Cloudinary Resim Servisi
-- [ ] Cloudinary SDK kurulumu
-- [ ] Upload preset oluşturma
-- [ ] Resim yükleme servisi
-  - [ ] Boyut limiti (max 5MB)
-  - [ ] Format dönüşümü (webp)
-  - [ ] Otomatik crop/resize
-  - [ ] Thumbnail oluşturma
-- [ ] Resim silme
-- [ ] CDN URL kullanımı
+- [x] Cloudinary SDK kurulumu
+- [x] Upload preset oluşturma
+- [x] Resim yükleme servisi
+  - [x] Boyut limiti (max 5MB)
+  - [x] Format dönüşümü (webp)
+  - [x] Otomatik crop/resize
+  - [x] Thumbnail oluşturma
+- [x] Resim silme
+- [x] CDN URL kullanımı
 
 ##### Email Bildirimleri
-- [ ] SendGrid/Mailgun hesabı
-- [ ] Email template'leri
-  - [ ] Hoş geldin emaili
-  - [ ] Şifre sıfırlama
+- [x] Nodemailer + SMTP (Gmail) entegrasyonu
+- [x] Email template'leri
+  - [x] Hoş geldin emaili
+  - [x] Şifre sıfırlama
   - [ ] (Opsiyonel) Günlük rapor
-- [ ] Email gönderme servisi
-- [ ] Error handling ve retry
+- [x] Email gönderme servisi
+- [x] Error handling ve retry
 
 ##### WebSocket Tam Entegrasyonu
 - [x] Tüm event'lerin test edilmesi
@@ -770,8 +770,8 @@ function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
 **Çıktılar:**
 - [x] Tüm sistemler entegre
 - [x] E2E testler yazılmış (5 test dosyası)
-- [ ] Cloudinary entegrasyonu çalışıyor (backend hazır, env var eksik)
-- [ ] Email sistemi hazır
+- [x] Cloudinary entegrasyonu çalışıyor (backend + frontend + Railway env vars)
+- [x] Email sistemi hazır (Nodemailer + SMTP Gmail)
 
 ---
 
@@ -1055,10 +1055,10 @@ function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
 - [ ] Backup ayarları
 
 ### Dosya Depolama
-- [ ] Cloudinary hesabı oluşturma
-- [ ] Upload preset oluşturma
-- [ ] API credentials alma
-- [ ] Folder yapısı planlama
+- [x] Cloudinary hesabı oluşturma
+- [x] Upload preset oluşturma
+- [x] API credentials alma
+- [x] Folder yapısı planlama (`qresto/restaurants/{id}/menu`)
 
 ### Domain & SSL
 - [ ] Domain seçeneklerini araştırma
@@ -1077,10 +1077,10 @@ function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
 - [ ] UptimeRobot hesabı
 
 ### Email Servisi
-- [ ] SendGrid veya Mailgun hesabı
-- [ ] Domain verification
-- [ ] API key oluşturma
-- [ ] Sender authentication
+- [x] Nodemailer (Gmail SMTP) kurulumu
+- [x] Gmail App Password oluşturma
+- [x] Railway'e SMTP env vars ekleme
+- [x] Sender: mahmuthasantaran@gmail.com
 
 ### Version Control & CI/CD
 - [x] GitHub repository oluşturma
@@ -1217,12 +1217,12 @@ function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
 ### Devam Eden / Eksik
 - [x] Şifre sıfırlama frontend sayfası (/admin/forgot-password + /admin/reset-password)\n- [x] Backend şifre sıfırlama token mantığı (resetToken + resetTokenExpiry DB alanları)
 - [x] PWA ikonları — manifest var ve public/icons/ dosyaları oluşturuldu
-- [ ] Cloudinary hesabı + env var'ları — backend kodu hazır, hesap/credentials eksik
-- [ ] Email gönderme servisi (şifre sıfırlama, hoş geldin maili)
+- [x] Cloudinary hesabı + env var'ları — backend + frontend entegre, Railway'de aktif
+- [x] Email gönderme servisi (şifre sıfırlama + hoş geldin maili, Nodemailer + Gmail SMTP)
 - [ ] Test coverage artırma (>80%)
 - [ ] API dokümantasyonu (Swagger/OpenAPI)
 - [ ] Custom domain bağlama (örn: app.qresto.com)
-- [ ] FRONTEND_URL env var'ı Railway'e ekleme
+- [x] FRONTEND_URL env var'ı Railway'e eklendi
 
 ### Başlanmamış (Faz 2)
 - [ ] Detaylı analitik dashboard
@@ -1248,17 +1248,17 @@ Aşağıdaki görevler kod incelemesi sırasında tespit edilmiş, orijinal plan
 - [x] `FRONTEND_URL` env var'ını Railway backend'e ekleme
 
 ### 🖼️ Görsel / Upload Sistemi
-- [ ] Cloudinary hesabı açma
-- [ ] `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` env var ekleme
-- [ ] Admin panelde menü ürünü resim upload test etme
-- [ ] Resim upload hata durumu UI
+- [x] Cloudinary hesabı açma
+- [x] `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` env var ekleme
+- [x] Admin panelde menü ürünü resim upload (tıkla-yükle + silme UI)
+- [x] Resim upload hata durumu UI
 
 ### 📧 Email Sistemi
-- [ ] Email servis sağlayıcı seçimi (SendGrid / Resend / Mailgun)
-- [ ] Hesap oluşturma + domain doğrulama
-- [ ] Backend'de email gönderim servisi yazma
-- [ ] Şifre sıfırlama email şablonu
-- [ ] Hoş geldin email şablonu
+- [x] Email servis sağlayıcı seçimi → Nodemailer + Gmail SMTP
+- [x] Gmail App Password oluşturma + Railway env vars (SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS)
+- [x] Backend'de email gönderim servisi yazma (`email.service.js`)
+- [x] Şifre sıfırlama email şablonu (HTML, branded)
+- [x] Hoş geldin email şablonu (HTML, branded)
 
 ### 🔒 Güvenlik
 - [x] JWT secret'ları daha güçlü rastgele string yapma (128 karakter, crypto.randomBytes)
