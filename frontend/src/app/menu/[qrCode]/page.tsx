@@ -8,13 +8,14 @@ import { Button, Card, CardBody, Badge, Modal } from '@/components/ui';
 import SessionTimer from '@/components/SessionTimer';
 import { TableSelectionModal } from '@/components/Treats/TableSelectionModal';
 import ThemeProvider from '@/components/providers/ThemeProvider';
-import { ShoppingCart, Plus, Minus, Clock, MapPin, X, AlertTriangle, ChevronRight, Gift, Lock } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, Clock, MapPin, X, AlertTriangle, ChevronRight, Gift, Lock, Globe } from 'lucide-react';
 
 interface MenuItem {
     id: number;
     name: string;
     nameEn?: string;
     description?: string;
+    descriptionEn?: string;
     price: number;
     imageUrl?: string;
     isAvailable: boolean;
@@ -74,6 +75,25 @@ export default function MenuPage() {
     const [showLocationModal, setShowLocationModal] = useState(false);
     const [locationError, setLocationError] = useState<string | null>(null);
     const [sessionStarting, setSessionStarting] = useState(false);
+
+    // Language
+    const [lang, setLang] = useState<'tr' | 'en'>('tr');
+
+    useEffect(() => {
+        const saved = localStorage.getItem('qresto-lang');
+        if (saved === 'en') setLang('en');
+    }, []);
+
+    const toggleLang = () => {
+        const next = lang === 'tr' ? 'en' : 'tr';
+        setLang(next);
+        localStorage.setItem('qresto-lang', next);
+    };
+
+    const t = (tr: string, en?: string | null) => {
+        if (lang === 'en' && en) return en;
+        return tr;
+    };
 
     // Treat System State
     const [isTreatMode, setIsTreatMode] = useState(false);
@@ -351,13 +371,22 @@ export default function MenuPage() {
                                     <h1 className="font-bold text-gray-900">{restaurant?.name}</h1>
                                     <div className="flex items-center gap-1 text-sm text-gray-500">
                                         <Lock className="w-3 h-3 text-orange-500" />
-                                        <span>Masa {table?.tableNumber}</span>
+                                        <span>{lang === 'tr' ? 'Masa' : 'Table'} {table?.tableNumber}</span>
                                     </div>
                                 </div>
                             </div>
-                            {sessionToken && (
-                                <SessionTimer onExpire={() => router.push('/')} />
-                            )}
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={toggleLang}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors text-sm font-medium text-gray-700"
+                                >
+                                    <Globe className="w-3.5 h-3.5" />
+                                    {lang === 'tr' ? 'EN' : 'TR'}
+                                </button>
+                                {sessionToken && (
+                                    <SessionTimer onExpire={() => router.push('/')} />
+                                )}
+                            </div>
                         </div>
                     </div>
 
@@ -413,7 +442,7 @@ export default function MenuPage() {
                                         }`}
                                 >
                                     {cat.icon && <span className="mr-1">{cat.icon}</span>}
-                                    {cat.name}
+                                    {t(cat.name, cat.nameEn)}
                                 </button>
                             ))}
                         </div>
@@ -423,7 +452,7 @@ export default function MenuPage() {
                 {/* Featured Items */}
                 {!isTreatMode && featuredItems.length > 0 && (
                     <section className="px-4 py-4">
-                        <h2 className="text-lg font-bold text-gray-900 mb-3">⭐ Öne Çıkanlar</h2>
+                        <h2 className="text-lg font-bold text-gray-900 mb-3">{lang === 'tr' ? '⭐ Öne Çıkanlar' : '⭐ Featured'}</h2>
                         <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
                             {featuredItems.map((item) => (
                                 <div
@@ -439,7 +468,7 @@ export default function MenuPage() {
                                         )}
                                     </div>
                                     <div className="p-2">
-                                        <p className="font-medium text-sm truncate">{item.name}</p>
+                                        <p className="font-medium text-sm truncate">{t(item.name, item.nameEn)}</p>
                                         <p className="text-orange-600 font-bold">₺{item.price}</p>
                                     </div>
                                 </div>
@@ -455,7 +484,7 @@ export default function MenuPage() {
                             .filter((cat) => activeCategory === null || cat.id === activeCategory)
                             .map((category) => (
                                 <div key={category.id} className="mb-6">
-                                    <h3 className="text-lg font-bold text-gray-900 mb-3">{category.name}</h3>
+                                    <h3 className="text-lg font-bold text-gray-900 mb-3">{t(category.name, category.nameEn)}</h3>
                                     <div className="space-y-3">
                                         {category.menuItems && category.menuItems.length > 0 ? (
                                             category.menuItems.map((item) => (
@@ -470,10 +499,10 @@ export default function MenuPage() {
                                                             <div className="flex-1 p-3">
                                                                 <div className="flex items-start justify-between">
                                                                     <div className="flex-1">
-                                                                        <h4 className="font-medium text-gray-900">{item.name}</h4>
-                                                                        {item.description && (
+                                                                        <h4 className="font-medium text-gray-900">{t(item.name, item.nameEn)}</h4>
+                                                                        {(item.description || (lang === 'en' && item.nameEn)) && (
                                                                             <p className="text-sm text-gray-500 mt-1 line-clamp-2">
-                                                                                {item.description}
+                                                                                {t(item.description || '', item.descriptionEn)}
                                                                             </p>
                                                                         )}
                                                                         <div className="flex items-center gap-2 mt-2">
@@ -532,7 +561,7 @@ export default function MenuPage() {
                                             ))
                                         ) : (
                                             <div className="text-center py-8 text-gray-500">
-                                                <p className="text-sm">Bu kategoride ürün bulunamadı</p>
+                                                <p className="text-sm">{lang === 'tr' ? 'Bu kategoride ürün bulunamadı' : 'No items in this category'}</p>
                                             </div>
                                         )}
                                     </div>
@@ -541,8 +570,8 @@ export default function MenuPage() {
                     ) : (
                         <div className="text-center py-12">
                             <AlertTriangle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                            <p className="text-gray-600 font-medium">Menü bulunamadı</p>
-                            <p className="text-sm text-gray-500 mt-2">Lütfen geçerli bir QR kod kullanın</p>
+                            <p className="text-gray-600 font-medium">{lang === 'tr' ? 'Menü bulunamadı' : 'Menu not found'}</p>
+                            <p className="text-sm text-gray-500 mt-2">{lang === 'tr' ? 'Lütfen geçerli bir QR kod kullanın' : 'Please use a valid QR code'}</p>
                         </div>
                     )}
                 </section>
@@ -561,7 +590,7 @@ export default function MenuPage() {
                                         {totalItems}
                                     </span>
                                 </div>
-                                <span className="font-medium">Sepeti Görüntüle</span>
+                                <span className="font-medium">{lang === 'tr' ? 'Sepeti Görüntüle' : 'View Cart'}</span>
                             </div>
                             <span className="font-bold text-lg">₺{totalAmount.toFixed(2)}</span>
                         </button>
@@ -576,7 +605,7 @@ export default function MenuPage() {
                         setItemQuantity(1);
                         setItemNote('');
                     }}
-                    title={selectedItem?.name || ''}
+                    title={selectedItem ? t(selectedItem.name, selectedItem.nameEn) : ''}
                     size="lg"
                 >
                     {selectedItem && (
@@ -598,14 +627,14 @@ export default function MenuPage() {
                             <div className="space-y-4">
                                 <p className="text-2xl font-bold text-orange-600">₺{selectedItem.price}</p>
 
-                                {selectedItem.description && (
-                                    <p className="text-gray-600">{selectedItem.description}</p>
+                                {(selectedItem.description || selectedItem.descriptionEn) && (
+                                    <p className="text-gray-600">{t(selectedItem.description || '', selectedItem.descriptionEn)}</p>
                                 )}
 
                                 {/* Allergens */}
                                 {selectedItem.allergens.length > 0 && (
                                     <div>
-                                        <p className="text-sm font-medium text-gray-700 mb-1">Alerjenler:</p>
+                                        <p className="text-sm font-medium text-gray-700 mb-1">{lang === 'tr' ? 'Alerjenler:' : 'Allergens:'}</p>
                                         <div className="flex flex-wrap gap-1">
                                             {selectedItem.allergens.map((a) => (
                                                 <span key={a} className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full">
@@ -619,12 +648,12 @@ export default function MenuPage() {
                                 {/* Notes */}
                                 <div>
                                     <label className="text-sm font-medium text-gray-700 block mb-1">
-                                        Özel Not (opsiyonel)
+                                        {lang === 'tr' ? 'Özel Not (opsiyonel)' : 'Special Note (optional)'}
                                     </label>
                                     <textarea
                                         value={itemNote}
                                         onChange={(e) => setItemNote(e.target.value)}
-                                        placeholder="Örn: Baharatsız olsun..."
+                                        placeholder={lang === 'tr' ? 'Örn: Baharatsız olsun...' : 'E.g.: No spice please...'}
                                         className="w-full border rounded-lg p-3 text-sm resize-none"
                                         rows={2}
                                     />
@@ -633,7 +662,7 @@ export default function MenuPage() {
                                 {/* Quantity (Hide in Treat Mode, simplify to 1) */}
                                 {!isTreatMode && (
                                     <div className="flex items-center justify-between">
-                                        <span className="font-medium">Adet:</span>
+                                        <span className="font-medium">{lang === 'tr' ? 'Adet:' : 'Qty:'}</span>
                                         <div className="flex items-center gap-4">
                                             <button
                                                 onClick={() => setItemQuantity(Math.max(1, itemQuantity - 1))}
@@ -662,10 +691,10 @@ export default function MenuPage() {
                                     {isTreatMode ? (
                                         <>
                                             <Gift className="w-5 h-5 mr-2" />
-                                            İkram Et - ₺{selectedItem.price}
+                                            {lang === 'tr' ? 'İkram Et' : 'Send Treat'} - ₺{selectedItem.price}
                                         </>
                                     ) : (
-                                        `Sepete Ekle - ₺${(selectedItem.price * itemQuantity).toFixed(2)}`
+                                        `${lang === 'tr' ? 'Sepete Ekle' : 'Add to Cart'} - ₺${(selectedItem.price * itemQuantity).toFixed(2)}`
                                     )}
                                 </Button>
                             </div>

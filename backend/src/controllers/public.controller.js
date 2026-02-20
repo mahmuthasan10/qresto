@@ -63,7 +63,8 @@ exports.getMenuByQR = async (req, res, next) => {
                         latitude: true,
                         longitude: true,
                         locationRadius: true,
-                        sessionTimeout: true
+                        sessionTimeout: true,
+                        themeSettings: true
                     }
                 }
             }
