@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useTableStore } from '@/stores/tableStore';
 import { useAuthStore } from '@/stores/authStore';
 import { Button, Input, Card, CardBody, Badge, Modal } from '@/components/ui';
 import { QRCodeSVG } from 'qrcode.react';
+import JSZip from 'jszip';
 import {
     Plus,
     Edit2,
@@ -12,7 +13,8 @@ import {
     QrCode,
     Download,
     RefreshCw,
-    Users
+    Users,
+    Archive
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -172,6 +174,143 @@ export default function TablesPage() {
         toast.success(`QR kod ${format.toUpperCase()} olarak indirildi`);
     };
 
+    // Bulk QR download
+    const [isBulkDownloading, setIsBulkDownloading] = useState(false);
+
+    const generateQRPng = useCallback((url: string, label: string, sublabel: string): Promise<Blob> => {
+        return new Promise((resolve, reject) => {
+            // Create offscreen container for QR rendering
+            const container = document.createElement('div');
+            container.style.position = 'absolute';
+            container.style.left = '-9999px';
+            document.body.appendChild(container);
+
+            // Render QR code SVG using ReactDOM
+            const { createRoot } = require('react-dom/client');
+            const root = createRoot(container);
+            root.render(
+                <QRCodeSVG value={url} size={300} level="H" includeMargin />
+            );
+
+            // Wait for render
+            setTimeout(() => {
+                const svg = container.querySelector('svg');
+                if (!svg) {
+                    root.unmount();
+                    document.body.removeChild(container);
+                    reject(new Error('SVG not found'));
+                    return;
+                }
+
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const img = new Image();
+
+                const svgData = new XMLSerializer().serializeToString(svg);
+                const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+                const svgUrl = URL.createObjectURL(svgBlob);
+
+                img.onload = () => {
+                    // Print-ready: 600x750 px (QR + label area)
+                    canvas.width = 600;
+                    canvas.height = 750;
+                    if (ctx) {
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                        // Draw QR centered
+                        const qrSize = 480;
+                        const qrX = (canvas.width - qrSize) / 2;
+                        ctx.drawImage(img, qrX, 40, qrSize, qrSize);
+
+                        // Draw separator line
+                        ctx.strokeStyle = '#e5e7eb';
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.moveTo(60, 550);
+                        ctx.lineTo(540, 550);
+                        ctx.stroke();
+
+                        // Draw table label
+                        ctx.fillStyle = '#111827';
+                        ctx.font = 'bold 36px Arial, sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.fillText(label, canvas.width / 2, 610);
+
+                        // Draw restaurant name
+                        ctx.fillStyle = '#6b7280';
+                        ctx.font = '24px Arial, sans-serif';
+                        ctx.fillText(sublabel, canvas.width / 2, 655);
+
+                        // Draw border
+                        ctx.strokeStyle = '#d1d5db';
+                        ctx.lineWidth = 3;
+                        ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
+
+                        canvas.toBlob((blob) => {
+                            URL.revokeObjectURL(svgUrl);
+                            root.unmount();
+                            document.body.removeChild(container);
+                            if (blob) resolve(blob);
+                            else reject(new Error('Canvas toBlob failed'));
+                        }, 'image/png');
+                    }
+                };
+
+                img.onerror = () => {
+                    URL.revokeObjectURL(svgUrl);
+                    root.unmount();
+                    document.body.removeChild(container);
+                    reject(new Error('Image load failed'));
+                };
+
+                img.src = svgUrl;
+            }, 100);
+        });
+    }, []);
+
+    const downloadAllQR = useCallback(async () => {
+        if (tables.length === 0) {
+            toast.error('Henüz masa yok');
+            return;
+        }
+
+        setIsBulkDownloading(true);
+        const toastId = toast.loading(`QR kodlar hazırlanıyor (0/${tables.length})...`);
+
+        try {
+            const zip = new JSZip();
+            const restaurantName = restaurant?.name || 'Restoran';
+
+            for (let i = 0; i < tables.length; i++) {
+                const table = tables[i];
+                const url = getMenuUrl(table.qrCode);
+                const label = table.tableName || `Masa ${table.tableNumber}`;
+
+                toast.loading(`QR kodlar hazırlanıyor (${i + 1}/${tables.length})...`, { id: toastId });
+
+                const pngBlob = await generateQRPng(url, label, restaurantName);
+                zip.file(`masa-${table.tableNumber}-qr.png`, pngBlob);
+            }
+
+            toast.loading('ZIP dosyası oluşturuluyor...', { id: toastId });
+
+            const zipBlob = await zip.generateAsync({ type: 'blob' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(zipBlob);
+            link.download = `${restaurantName.replace(/\s+/g, '-').toLowerCase()}-qr-kodlar.zip`;
+            link.click();
+            URL.revokeObjectURL(link.href);
+
+            toast.success(`${tables.length} QR kod indirildi!`, { id: toastId });
+        } catch (err) {
+            console.error('Bulk QR download error:', err);
+            toast.error('QR kod indirme başarısız', { id: toastId });
+        } finally {
+            setIsBulkDownloading(false);
+        }
+    }, [tables, restaurant, generateQRPng, getMenuUrl]);
+
     // Delete handlers
     const confirmDelete = (table: any) => {
         setDeleteTarget(table);
@@ -212,10 +351,23 @@ export default function TablesPage() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <h2 className="text-xl font-semibold text-gray-900">Masa Yönetimi</h2>
-                <Button onClick={openAddTable}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Yeni Masa
-                </Button>
+                <div className="flex gap-2">
+                    {tables.length > 0 && (
+                        <Button
+                            variant="outline"
+                            onClick={downloadAllQR}
+                            isLoading={isBulkDownloading}
+                            disabled={isBulkDownloading}
+                        >
+                            <Archive className="w-4 h-4 mr-2" />
+                            Tüm QR Kodları İndir
+                        </Button>
+                    )}
+                    <Button onClick={openAddTable}>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Yeni Masa
+                    </Button>
+                </div>
             </div>
 
             {/* Tables Grid */}
