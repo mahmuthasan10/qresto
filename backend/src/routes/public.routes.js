@@ -113,4 +113,7 @@ router.get('/orders/:orderNumber', publicController.getOrderStatus);
 // POST /api/v1/public/location/verify - Lokasyon doğrulama
 router.post('/location/verify', publicController.verifyLocation);
 
+// GET /api/v1/public/demo/menu - Demo menü verisi (statik)
+router.get('/demo/menu', publicController.getDemoMenu);
+
 module.exports = router;

@@ -82,18 +82,18 @@
 ---
 
 ### 8. YASAL DOKUMANLAR (TEMEL)
-- [ ] KVKK Aydinlatma Metni
-- [ ] Gizlilik Politikasi
-- [ ] Kullanim Kosullari
-- [ ] Footer'a linkleri ekleme
+- [x] KVKK Aydinlatma Metni
+- [x] Gizlilik Politikasi
+- [x] Kullanim Kosullari
+- [x] Footer'a linkleri ekleme
 
 ---
 
 ### 9. DEMO MODU
-- [ ] Ornek verilerle dolu demo restoran
-- [ ] Landing page'den erisilebilir
-- [ ] Read-only mod
-- [ ] "Kendi restoraninizi olusturun" CTA
+- [x] Ornek verilerle dolu demo restoran
+- [x] Landing page'den erisilebilir
+- [x] Read-only mod
+- [x] "Kendi restoraninizi olusturun" CTA
 
 ---
 
@@ -121,4 +121,4 @@
 
 ---
 
-*Son guncelleme: 2026-02-19*
+*Son guncelleme: 2026-02-20*
