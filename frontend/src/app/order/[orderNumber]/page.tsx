@@ -122,6 +122,33 @@ export default function OrderTrackingPage() {
     const currentStatus = statusConfig[order.status] || statusConfig.pending;
     const currentStatusIndex = statusOrder.indexOf(order.status);
     const isCancelled = order.status === 'cancelled';
+    const isCompleted = order.status === 'completed';
+
+    // Tahmini süre hesapla
+    const getEstimatedTime = () => {
+        if (isCancelled || isCompleted) return null;
+
+        const createdAt = new Date(order.createdAt);
+        const now = new Date();
+        const elapsedMin = Math.floor((now.getTime() - createdAt.getTime()) / 1000 / 60);
+
+        // Ortalama tahmini süreler (dakika)
+        const estimatedByStatus: Record<string, number> = {
+            pending: 20,
+            confirmed: 18,
+            preparing: 12,
+            ready: 2,
+        };
+
+        const totalEstimate = estimatedByStatus[order.status] || 15;
+        const remaining = Math.max(0, totalEstimate - (elapsedMin % totalEstimate));
+
+        if (remaining <= 0) return 'Çok yakında!';
+        if (remaining <= 2) return '~2 dakika';
+        return `~${remaining} dakika`;
+    };
+
+    const estimatedTime = getEstimatedTime();
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -152,6 +179,16 @@ export default function OrderTrackingPage() {
                             {currentStatus.label}
                         </h2>
                         <p className="text-gray-600 mt-1">Masa {order.tableNumber}</p>
+
+                        {/* Tahmini Süre */}
+                        {estimatedTime && (
+                            <div className="mt-3 inline-flex items-center gap-1.5 bg-white/80 px-4 py-2 rounded-full">
+                                <Clock className="w-4 h-4 text-orange-500" />
+                                <span className="text-sm font-medium text-gray-700">
+                                    Tahmini: {estimatedTime}
+                                </span>
+                            </div>
+                        )}
                     </div>
 
                     {/* Status Stepper */}

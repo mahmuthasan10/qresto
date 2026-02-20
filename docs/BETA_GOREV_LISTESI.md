@@ -73,11 +73,11 @@
 
 ### 7. KUCUK IYILESTIRMELER
 - [x] Sidebar'a Analytics linki ekle
-- [ ] Mobile responsive son kontrol
-- [ ] Toast mesajlari Turkcelelestirme
-- [ ] Menu sayfasi: Arama/filtreleme
-- [ ] Siparis takip: Tahmini sure gosterimi
-- [ ] Mutfak ekrani: Yazdirma modu
+- [x] Mobile responsive son kontrol
+- [x] Toast mesajlari Turkcelelestirme
+- [x] Menu sayfasi: Arama/filtreleme
+- [x] Siparis takip: Tahmini sure gosterimi
+- [x] Mutfak ekrani: Yazdirma modu
 
 ---
 

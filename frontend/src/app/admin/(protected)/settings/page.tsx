@@ -281,7 +281,7 @@ export default function SettingsPage() {
                 </p>
             </CardHeader>
             <CardBody className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <Input
                         label="Enlem (Latitude)"
                         type="number"
@@ -412,7 +412,7 @@ export default function SettingsPage() {
                     <p className="text-sm text-gray-500 mt-1">Hızlıca bir tema seçin veya aşağıdan özelleştirin.</p>
                 </CardHeader>
                 <CardBody>
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                         {presetColors.map((preset) => (
                             <button
                                 key={preset.label}
@@ -440,7 +440,7 @@ export default function SettingsPage() {
                     <h3 className="font-medium text-gray-900">Özel Renkler</h3>
                 </CardHeader>
                 <CardBody className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">Ana Renk</label>
                             <div className="flex items-center gap-3">
@@ -499,7 +499,7 @@ export default function SettingsPage() {
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Köşe Yuvarlaklığı</label>
-                        <div className="grid grid-cols-4 gap-2">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                             {radiusOptions.map((opt) => (
                                 <button
                                     key={opt.value}
@@ -660,7 +660,7 @@ export default function SettingsPage() {
 
             {/* Tabs */}
             <div className="border-b">
-                <nav className="flex gap-4 -mb-px">
+                <nav className="flex gap-4 -mb-px overflow-x-auto">
                     {tabs.map(tab => {
                         const Icon = tab.icon;
                         const isActive = activeTab === tab.id;

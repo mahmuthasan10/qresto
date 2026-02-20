@@ -5,7 +5,7 @@ import { useKitchenStore, KitchenOrderStatus, playNotificationSound } from '@/st
 import { useSocket, socketService } from '@/lib/socket';
 import { OrderCard } from '@/components/kitchen';
 import ConnectionIndicator from '@/components/ConnectionIndicator';
-import { Volume2, VolumeX, RefreshCw, ChefHat } from 'lucide-react';
+import { Volume2, VolumeX, RefreshCw, ChefHat, Printer } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 
@@ -161,6 +161,68 @@ export default function KitchenPage() {
         return date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
     };
 
+    const handlePrint = () => {
+        const allOrders = [...pendingOrders, ...preparingOrders, ...readyOrders];
+        if (allOrders.length === 0) {
+            toast.error('Yazdırılacak sipariş yok');
+            return;
+        }
+
+        const statusLabels: Record<string, string> = {
+            pending: 'BEKLİYOR', confirmed: 'ONAYLANDI',
+            preparing: 'HAZIRLANIYOR', ready: 'HAZIR'
+        };
+
+        const now = new Date().toLocaleString('tr-TR');
+        const printContent = `
+            <!DOCTYPE html>
+            <html><head><meta charset="utf-8">
+            <title>Mutfak Siparişleri</title>
+            <style>
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                body { font-family: 'Courier New', monospace; font-size: 12px; padding: 10px; }
+                h1 { font-size: 16px; text-align: center; margin-bottom: 4px; }
+                .date { text-align: center; font-size: 10px; margin-bottom: 12px; color: #666; }
+                .order { border: 2px solid #000; margin-bottom: 10px; padding: 8px; page-break-inside: avoid; }
+                .order-header { display: flex; justify-content: space-between; font-weight: bold; font-size: 14px; border-bottom: 1px dashed #000; padding-bottom: 4px; margin-bottom: 6px; }
+                .status { padding: 2px 6px; border: 1px solid #000; font-size: 10px; }
+                .items { list-style: none; }
+                .items li { padding: 2px 0; font-size: 13px; }
+                .items .qty { font-weight: bold; }
+                .items .note { font-size: 10px; color: #555; padding-left: 20px; }
+                .time { font-size: 10px; color: #666; margin-top: 4px; }
+                @media print { body { padding: 0; } }
+            </style></head><body>
+            <h1>MUTFAK SİPARİŞLERİ</h1>
+            <div class="date">${now}</div>
+            ${allOrders.map(order => `
+                <div class="order">
+                    <div class="order-header">
+                        <span>#${order.orderNumber} - Masa ${order.tableNumber}</span>
+                        <span class="status">${statusLabels[order.status] || order.status}</span>
+                    </div>
+                    <ul class="items">
+                        ${order.orderItems.map(item => `
+                            <li><span class="qty">${item.quantity}x</span> ${item.itemName}</li>
+                            ${item.notes ? `<li class="note">📝 ${item.notes}</li>` : ''}
+                        `).join('')}
+                    </ul>
+                    <div class="time">${new Date(order.createdAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</div>
+                </div>
+            `).join('')}
+            </body></html>
+        `;
+
+        const printWindow = window.open('', '_blank', 'width=400,height=600');
+        if (printWindow) {
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+            printWindow.focus();
+            printWindow.print();
+            printWindow.close();
+        }
+    };
+
     if (!isClient) {
         return <div className="min-h-screen bg-gray-100 flex items-center justify-center">Yükleniyor...</div>;
     }
@@ -168,31 +230,31 @@ export default function KitchenPage() {
     return (
         <div className="min-h-screen bg-gray-100">
             {/* Header */}
-            <header className="bg-gray-900 text-white px-6 py-4 flex items-center justify-between sticky top-0 z-50">
-                <div className="flex items-center gap-4">
-                    <ChefHat className="w-8 h-8 text-orange-500" />
-                    <h1 className="text-2xl font-bold">Mutfak Ekranı</h1>
+            <header className="bg-gray-900 text-white px-4 lg:px-6 py-3 lg:py-4 flex flex-wrap items-center justify-between gap-3 sticky top-0 z-50">
+                <div className="flex items-center gap-3 lg:gap-4">
+                    <ChefHat className="w-6 h-6 lg:w-8 lg:h-8 text-orange-500" />
+                    <h1 className="text-lg lg:text-2xl font-bold">Mutfak Ekranı</h1>
                 </div>
 
-                <div className="flex items-center gap-6">
+                <div className="flex flex-wrap items-center gap-2 lg:gap-6">
                     {/* Order Count */}
-                    <div className="flex items-center gap-3">
-                        <div className="bg-red-600 text-white px-4 py-2 rounded-lg">
-                            <span className="text-2xl font-bold">{pendingOrders.length}</span>
-                            <span className="text-sm ml-2">Bekleyen</span>
+                    <div className="flex items-center gap-2 lg:gap-3">
+                        <div className="bg-red-600 text-white px-2 lg:px-4 py-1 lg:py-2 rounded-lg">
+                            <span className="text-lg lg:text-2xl font-bold">{pendingOrders.length}</span>
+                            <span className="text-xs lg:text-sm ml-1 lg:ml-2 hidden sm:inline">Bekleyen</span>
                         </div>
-                        <div className="bg-orange-600 text-white px-4 py-2 rounded-lg">
-                            <span className="text-2xl font-bold">{preparingOrders.length}</span>
-                            <span className="text-sm ml-2">Hazırlanan</span>
+                        <div className="bg-orange-600 text-white px-2 lg:px-4 py-1 lg:py-2 rounded-lg">
+                            <span className="text-lg lg:text-2xl font-bold">{preparingOrders.length}</span>
+                            <span className="text-xs lg:text-sm ml-1 lg:ml-2 hidden sm:inline">Hazırlanan</span>
                         </div>
-                        <div className="bg-green-600 text-white px-4 py-2 rounded-lg">
-                            <span className="text-2xl font-bold">{readyOrders.length}</span>
-                            <span className="text-sm ml-2">Hazır</span>
+                        <div className="bg-green-600 text-white px-2 lg:px-4 py-1 lg:py-2 rounded-lg">
+                            <span className="text-lg lg:text-2xl font-bold">{readyOrders.length}</span>
+                            <span className="text-xs lg:text-sm ml-1 lg:ml-2 hidden sm:inline">Hazır</span>
                         </div>
                     </div>
 
                     {/* Last Updated */}
-                    <div className="text-gray-400 text-sm">
+                    <div className="text-gray-400 text-xs lg:text-sm hidden md:block">
                         Son güncelleme: {formatTime(lastUpdated)}
                     </div>
 
@@ -217,14 +279,23 @@ export default function KitchenPage() {
                     >
                         <RefreshCw className={`w-6 h-6 ${isLoading ? 'animate-spin' : ''}`} />
                     </button>
+
+                    {/* Print */}
+                    <button
+                        onClick={handlePrint}
+                        className="p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
+                        title="Yazdır"
+                    >
+                        <Printer className="w-6 h-6" />
+                    </button>
                 </div>
             </header>
 
             {/* Kanban Board */}
             <DragDropContext onDragEnd={onDragEnd}>
-                <div className="p-6 grid grid-cols-3 gap-6 h-[calc(100vh-88px)]">
+                <div className="p-3 lg:p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 h-auto lg:h-[calc(100vh-88px)]">
                     {/* New Orders Column */}
-                    <div className="flex flex-col h-full">
+                    <div className="flex flex-col min-h-[300px] lg:h-full">
                         <div className="bg-red-600 text-white px-4 py-3 rounded-t-xl flex items-center justify-between">
                             <h2 className="text-xl font-bold">YENİ SİPARİŞLER</h2>
                             <span className="bg-white text-red-600 w-8 h-8 rounded-full flex items-center justify-center font-bold">
@@ -269,7 +340,7 @@ export default function KitchenPage() {
                     </div>
 
                     {/* Preparing Column */}
-                    <div className="flex flex-col h-full">
+                    <div className="flex flex-col min-h-[300px] lg:h-full">
                         <div className="bg-orange-500 text-white px-4 py-3 rounded-t-xl flex items-center justify-between">
                             <h2 className="text-xl font-bold">HAZIRLANIYOR</h2>
                             <span className="bg-white text-orange-600 w-8 h-8 rounded-full flex items-center justify-center font-bold">
@@ -314,7 +385,7 @@ export default function KitchenPage() {
                     </div>
 
                     {/* Ready Column */}
-                    <div className="flex flex-col h-full">
+                    <div className="flex flex-col min-h-[300px] lg:h-full">
                         <div className="bg-green-600 text-white px-4 py-3 rounded-t-xl flex items-center justify-between">
                             <h2 className="text-xl font-bold">HAZIR</h2>
                             <span className="bg-white text-green-600 w-8 h-8 rounded-full flex items-center justify-center font-bold">
@@ -361,7 +432,7 @@ export default function KitchenPage() {
             </DragDropContext>
 
             {/* Keyboard Shortcuts Help */}
-            <div className="fixed bottom-4 left-4 bg-gray-800 text-white px-4 py-2 rounded-lg text-sm opacity-70">
+            <div className="hidden lg:block fixed bottom-4 left-4 bg-gray-800 text-white px-4 py-2 rounded-lg text-sm opacity-70">
                 <span className="font-medium">Kısayollar:</span> 1-9 Seç | Enter İlerlet | Esc İptal
             </div>
         </div>

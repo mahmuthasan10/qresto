@@ -8,7 +8,7 @@ import { Button, Card, CardBody, Badge, Modal } from '@/components/ui';
 import SessionTimer from '@/components/SessionTimer';
 import { TableSelectionModal } from '@/components/Treats/TableSelectionModal';
 import ThemeProvider from '@/components/providers/ThemeProvider';
-import { ShoppingCart, Plus, Minus, Clock, MapPin, X, AlertTriangle, ChevronRight, Gift, Lock, Globe } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, Clock, MapPin, X, AlertTriangle, ChevronRight, Gift, Lock, Globe, Search } from 'lucide-react';
 
 interface MenuItem {
     id: number;
@@ -75,6 +75,7 @@ export default function MenuPage() {
     const [showLocationModal, setShowLocationModal] = useState(false);
     const [locationError, setLocationError] = useState<string | null>(null);
     const [sessionStarting, setSessionStarting] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
 
     // Language
     const [lang, setLang] = useState<'tr' | 'en'>('tr');
@@ -449,8 +450,30 @@ export default function MenuPage() {
                     </div>
                 </header>
 
+                {/* Search Bar */}
+                <div className="px-4 pt-3 pb-1">
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder={lang === 'tr' ? 'Menüde ara...' : 'Search menu...'}
+                            className="w-full pl-10 pr-10 py-2.5 bg-gray-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 focus:bg-white transition-all"
+                        />
+                        {searchQuery && (
+                            <button
+                                onClick={() => setSearchQuery('')}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        )}
+                    </div>
+                </div>
+
                 {/* Featured Items */}
-                {!isTreatMode && featuredItems.length > 0 && (
+                {!isTreatMode && featuredItems.length > 0 && !searchQuery && (
                     <section className="px-4 py-4">
                         <h2 className="text-lg font-bold text-gray-900 mb-3">{lang === 'tr' ? '⭐ Öne Çıkanlar' : '⭐ Featured'}</h2>
                         <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
@@ -482,12 +505,27 @@ export default function MenuPage() {
                     {categories && categories.length > 0 ? (
                         categories
                             .filter((cat) => activeCategory === null || cat.id === activeCategory)
-                            .map((category) => (
+                            .map((category) => {
+                                const filteredItems = searchQuery
+                                    ? category.menuItems.filter((item) => {
+                                        const q = searchQuery.toLowerCase();
+                                        return (
+                                            item.name.toLowerCase().includes(q) ||
+                                            (item.nameEn && item.nameEn.toLowerCase().includes(q)) ||
+                                            (item.description && item.description.toLowerCase().includes(q)) ||
+                                            (item.descriptionEn && item.descriptionEn.toLowerCase().includes(q))
+                                        );
+                                    })
+                                    : category.menuItems;
+
+                                if (searchQuery && filteredItems.length === 0) return null;
+
+                                return (
                                 <div key={category.id} className="mb-6">
                                     <h3 className="text-lg font-bold text-gray-900 mb-3">{t(category.name, category.nameEn)}</h3>
                                     <div className="space-y-3">
-                                        {category.menuItems && category.menuItems.length > 0 ? (
-                                            category.menuItems.map((item) => (
+                                        {filteredItems.length > 0 ? (
+                                            filteredItems.map((item) => (
                                                 <Card
                                                     key={item.id}
                                                     hoverable
@@ -566,12 +604,39 @@ export default function MenuPage() {
                                         )}
                                     </div>
                                 </div>
-                            ))
+                                );
+                            }).filter(Boolean)
                     ) : (
                         <div className="text-center py-12">
                             <AlertTriangle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                             <p className="text-gray-600 font-medium">{lang === 'tr' ? 'Menü bulunamadı' : 'Menu not found'}</p>
                             <p className="text-sm text-gray-500 mt-2">{lang === 'tr' ? 'Lütfen geçerli bir QR kod kullanın' : 'Please use a valid QR code'}</p>
+                        </div>
+                    )}
+
+                    {/* Search - no results */}
+                    {searchQuery && categories.length > 0 && categories
+                        .filter((cat) => activeCategory === null || cat.id === activeCategory)
+                        .every((cat) => cat.menuItems.every((item) => {
+                            const q = searchQuery.toLowerCase();
+                            return !(
+                                item.name.toLowerCase().includes(q) ||
+                                (item.nameEn && item.nameEn.toLowerCase().includes(q)) ||
+                                (item.description && item.description.toLowerCase().includes(q)) ||
+                                (item.descriptionEn && item.descriptionEn.toLowerCase().includes(q))
+                            );
+                        })) && (
+                        <div className="text-center py-12">
+                            <Search className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                            <p className="text-gray-500 font-medium">
+                                {lang === 'tr' ? `"${searchQuery}" için sonuç bulunamadı` : `No results for "${searchQuery}"`}
+                            </p>
+                            <button
+                                onClick={() => setSearchQuery('')}
+                                className="mt-3 text-orange-500 text-sm font-medium hover:underline"
+                            >
+                                {lang === 'tr' ? 'Aramayı Temizle' : 'Clear Search'}
+                            </button>
                         </div>
                     )}
                 </section>

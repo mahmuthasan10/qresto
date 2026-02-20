@@ -539,7 +539,7 @@ export default function MenuPage() {
                 title={editingItem ? 'Ürün Düzenle' : 'Yeni Ürün'}
             >
                 <div className="space-y-4 max-h-[60vh] overflow-y-auto">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <Input
                             label="Ürün Adı *"
                             value={itemForm.name}
@@ -562,7 +562,7 @@ export default function MenuPage() {
                         rows={2}
                     />
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <Input
                             label="Fiyat (₺) *"
                             type="number"
