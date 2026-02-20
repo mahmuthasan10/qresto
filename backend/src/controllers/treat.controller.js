@@ -1,16 +1,28 @@
 const prisma = require('../config/database');
+const Joi = require('joi');
 const { logger } = require('../utils/logger');
+
+const createTreatSchema = Joi.object({
+    fromTableId: Joi.number().integer().positive().required(),
+    toTableId: Joi.number().integer().positive().required(),
+    menuItemId: Joi.number().integer().positive().required(),
+    note: Joi.string().max(500).optional().allow('', null)
+});
+
+const updateStatusSchema = Joi.object({
+    status: Joi.string().valid('APPROVED', 'REJECTED', 'CANCELLED').required()
+});
 
 const TreatController = {
     // Create a treat request
     async createTreat(req, res) {
         try {
-            const { fromTableId, toTableId, menuItemId, note } = req.body;
-
-            // Basic validation
-            if (!fromTableId || !toTableId || !menuItemId) {
-                return res.status(400).json({ error: 'Eksik bilgi' });
+            const { error, value } = createTreatSchema.validate(req.body);
+            if (error) {
+                return res.status(400).json({ error: error.details[0].message });
             }
+
+            const { fromTableId, toTableId, menuItemId, note } = value;
 
             if (fromTableId === toTableId) {
                 return res.status(400).json({ error: 'Kendinize ikram edemezsiniz' });
@@ -73,9 +85,13 @@ const TreatController = {
     async updateStatus(req, res) {
         try {
             const { id } = req.params;
-            const { status } = req.body;
 
-            const prisma = require('../config/database'); // Ensure prisma is available if not globally
+            const { error, value } = updateStatusSchema.validate(req.body);
+            if (error) {
+                return res.status(400).json({ error: error.details[0].message });
+            }
+
+            const { status } = value;
 
             // First get the treat to have details
             const currentTreat = await prisma.treat.findUnique({
@@ -170,17 +186,15 @@ const TreatController = {
             // Let's check how we get restaurant context.
             // Usually via the QR code in the URL.
 
-            // Let's assume the frontend passes `restaurantId`.
-            const restaurantId = req.query.restaurantId;
+            const restaurantId = parseInt(req.query.restaurantId);
 
-            if (!restaurantId) {
-                return res.status(400).json({ error: 'Restaurant ID required' });
+            if (!restaurantId || isNaN(restaurantId) || restaurantId <= 0) {
+                return res.status(400).json({ error: 'Geçerli bir Restaurant ID gerekli' });
             }
 
-            // Find all tables with active sessions
             const activeTables = await prisma.table.findMany({
                 where: {
-                    restaurantId: parseInt(restaurantId),
+                    restaurantId,
                     isActive: true
                     // In a real scenario, we check for sessions.
                     // sessions: { some: { isActive: true } }

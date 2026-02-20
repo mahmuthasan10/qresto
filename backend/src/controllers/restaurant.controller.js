@@ -173,7 +173,7 @@ exports.getStats = async (req, res, next) => {
 
 exports.getDailyStats = async (req, res, next) => {
     try {
-        const days = parseInt(req.query.days) || 7;
+        const days = Math.max(1, Math.min(90, parseInt(req.query.days) || 7));
         const results = [];
 
         for (let i = 0; i < days; i++) {

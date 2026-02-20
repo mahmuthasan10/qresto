@@ -17,8 +17,11 @@ exports.getAll = async (req, res, next) => {
         const { status, tableId, page = 1, limit = 20 } = req.query;
 
         const where = { restaurantId: req.restaurantId };
-        if (status) where.status = status;
+        if (status && statusValues.includes(status)) where.status = status;
         if (tableId) where.tableId = parseInt(tableId);
+
+        const safePage = Math.max(1, Math.min(1000, parseInt(page) || 1));
+        const safeLimit = Math.max(1, Math.min(100, parseInt(limit) || 20));
 
         const [orders, total] = await Promise.all([
             prisma.order.findMany({
@@ -28,8 +31,8 @@ exports.getAll = async (req, res, next) => {
                     table: { select: { tableNumber: true, tableName: true } }
                 },
                 orderBy: { createdAt: 'desc' },
-                skip: (parseInt(page) - 1) * parseInt(limit),
-                take: parseInt(limit)
+                skip: (safePage - 1) * safeLimit,
+                take: safeLimit
             }),
             prisma.order.count({ where })
         ]);
@@ -38,9 +41,9 @@ exports.getAll = async (req, res, next) => {
             orders,
             pagination: {
                 total,
-                page: parseInt(page),
-                limit: parseInt(limit),
-                totalPages: Math.ceil(total / parseInt(limit))
+                page: safePage,
+                limit: safeLimit,
+                totalPages: Math.ceil(total / safeLimit)
             }
         });
     } catch (error) {
@@ -99,20 +102,29 @@ exports.getHistory = async (req, res, next) => {
     try {
         const { startDate, endDate, page = 1, limit = 50 } = req.query;
 
+        const safePage = Math.max(1, Math.min(1000, parseInt(page) || 1));
+        const safeLimit = Math.max(1, Math.min(100, parseInt(limit) || 50));
+
         const where = {
             restaurantId: req.restaurantId,
             status: { in: ['completed', 'cancelled'] }
         };
 
-        if (startDate) where.createdAt = { ...where.createdAt, gte: new Date(startDate) };
-        if (endDate) where.createdAt = { ...where.createdAt, lte: new Date(endDate) };
+        if (startDate) {
+            const d = new Date(startDate);
+            if (!isNaN(d.getTime())) where.createdAt = { ...where.createdAt, gte: d };
+        }
+        if (endDate) {
+            const d = new Date(endDate);
+            if (!isNaN(d.getTime())) where.createdAt = { ...where.createdAt, lte: d };
+        }
 
         const orders = await prisma.order.findMany({
             where,
             include: { orderItems: true },
             orderBy: { createdAt: 'desc' },
-            skip: (parseInt(page) - 1) * parseInt(limit),
-            take: parseInt(limit)
+            skip: (safePage - 1) * safeLimit,
+            take: safeLimit
         });
 
         res.json({ orders });

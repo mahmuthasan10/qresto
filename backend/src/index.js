@@ -27,8 +27,11 @@ const { logger } = require('./utils/logger');
 const app = express();
 const httpServer = createServer(app);
 
-// CORS origin ayarı: '*' ise tüm origin'lere izin ver (credentials ile uyumlu)
+// CORS origin ayarı
 const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:3000';
+if (corsOrigin === '*' && process.env.NODE_ENV === 'production') {
+  logger.warn('CORS_ORIGIN is set to * in production — consider restricting to specific domains');
+}
 const corsConfig = {
   origin: corsOrigin === '*' ? true : corsOrigin,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
@@ -86,13 +89,24 @@ app.use(helmet());
 // CORS
 app.use(cors(corsConfig));
 
-// Rate limiting
+// Rate limiting - genel
 const limiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 60000,
   max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
   message: { error: 'Çok fazla istek gönderildi. Lütfen bir dakika sonra tekrar deneyin.' }
 });
 app.use('/api', limiter);
+
+// Rate limiting - auth endpoints (login/register/forgot-password: 5 deneme / 15 dakika)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: { error: 'Çok fazla giriş denemesi. Lütfen 15 dakika sonra tekrar deneyin.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use('/api/v1/auth/login', authLimiter);
+app.use('/api/v1/auth/forgot-password', authLimiter);
 
 // Body parsing
 app.use(express.json({ limit: '10mb' }));

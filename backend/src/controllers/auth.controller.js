@@ -134,21 +134,11 @@ exports.login = async (req, res, next) => {
         }
 
         const { email, password } = value;
-        const fs = require('fs');
 
         // Find restaurant
-        let restaurant;
-        try {
-            restaurant = await prisma.restaurant.findUnique({
-                where: { email }
-            });
-        } catch (dbError) {
-            fs.appendFileSync('backend_error.log', `DB Error findUnique: ${dbError.message}\n`);
-            // Fallback
-            restaurant = await prisma.restaurant.findFirst({
-                where: { email }
-            });
-        }
+        const restaurant = await prisma.restaurant.findUnique({
+            where: { email }
+        });
 
         if (!restaurant) {
             return res.status(401).json({ error: 'Email veya şifre hatalı' });
