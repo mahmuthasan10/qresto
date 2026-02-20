@@ -62,17 +62,17 @@
 ---
 
 ### 6. ANALITIK DASHBOARD (TEMEL)
-- [ ] Bugunun ozeti: siparis sayisi, gelir, aktif masa
-- [ ] Son 7 gun grafigi (bar chart)
-- [ ] En cok satan 5 urun
-- [ ] Siparis durum dagilimi (pie chart)
+- [x] Bugunun ozeti: siparis sayisi, gelir, aktif masa
+- [x] Son 7 gun grafigi (bar chart)
+- [x] En cok satan 5 urun
+- [x] Siparis durum dagilimi (pie chart)
 
 **Dosya:** `frontend/src/app/admin/(protected)/analytics/page.tsx`
 
 ---
 
 ### 7. KUCUK IYILESTIRMELER
-- [ ] Sidebar'a Analytics linki ekle
+- [x] Sidebar'a Analytics linki ekle
 - [ ] Mobile responsive son kontrol
 - [ ] Toast mesajlari Turkcelelestirme
 - [ ] Menu sayfasi: Arama/filtreleme

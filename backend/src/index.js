@@ -19,6 +19,7 @@ const orderRoutes = require('./routes/order.routes');
 const sessionRoutes = require('./routes/session.routes');
 const publicRoutes = require('./routes/public.routes');
 const treatRoutes = require('./routes/treat.routes');
+const analyticsRoutes = require('./routes/analytics.routes');
 
 // Import middleware
 const errorHandler = require('./middleware/errorHandler');
@@ -142,6 +143,7 @@ app.use('/api/v1/orders', orderRoutes);
 app.use('/api/v1/sessions', sessionRoutes);
 app.use('/api/v1/public', publicRoutes);
 app.use('/api/v1/treats', treatRoutes);
+app.use('/api/v1/analytics', analyticsRoutes);
 
 // 404 handler
 app.use((req, res) => {
