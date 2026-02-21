@@ -5,7 +5,7 @@ import { Button, Input, Card, CardBody, CardHeader, Badge, Tabs, Modal, Textarea
 import {
     LayoutDashboard, UtensilsCrossed, Grid3X3, ClipboardList, Settings, LogOut,
     Plus, Edit2, Trash2, QrCode, Download, Eye, TrendingUp, Users, DollarSign,
-    Menu as MenuIcon, X, Search, MoreVertical
+    Menu as MenuIcon
 } from 'lucide-react';
 
 type AdminView = 'dashboard' | 'menu' | 'tables' | 'orders' | 'settings';

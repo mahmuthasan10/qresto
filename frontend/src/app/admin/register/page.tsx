@@ -78,7 +78,8 @@ export default function RegisterPage() {
     };
 
     const onSubmit = async (data: RegisterFormData) => {
-        const { confirmPassword, ...registerData } = data;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { confirmPassword: _, ...registerData } = data;
         const success = await registerStore({
             ...registerData,
             phone: registerData.phone || undefined,

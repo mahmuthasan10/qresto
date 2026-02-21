@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
+import Image from 'next/image';
 import { useMenuStore } from '@/stores/menuStore';
 import { Button, Input, Card, CardBody, CardHeader, Badge, Modal, Textarea } from '@/components/ui';
 import {
@@ -12,7 +13,6 @@ import {
     Search,
     ToggleLeft,
     ToggleRight,
-    Image as ImageIcon,
     Upload,
     X,
     Loader2
@@ -411,10 +411,12 @@ export default function MenuPage() {
                                                                     <Loader2 className="w-6 h-6 text-orange-500 animate-spin" />
                                                                 ) : item.imageUrl ? (
                                                                     <>
-                                                                        <img
+                                                                        <Image
                                                                             src={item.imageUrl}
                                                                             alt={item.name}
-                                                                            className="w-full h-full object-cover"
+                                                                            fill
+                                                                            className="object-cover"
+                                                                            sizes="56px"
                                                                         />
                                                                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                                                             <Upload className="w-4 h-4 text-white" />

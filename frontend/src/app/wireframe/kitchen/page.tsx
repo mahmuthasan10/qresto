@@ -176,7 +176,7 @@ function Column({ title, status, bgColor, borderColor, nextStatus, buttonLabel, 
 export default function KitchenWireframe() {
     const [orders, setOrders] = useState<KitchenOrder[]>(initialOrders);
     const [soundEnabled, setSoundEnabled] = useState(true);
-    const [lastUpdate, setLastUpdate] = useState(new Date());
+    const [lastUpdate] = useState(new Date());
     const [, setTick] = useState(0);
 
     // Update relative times every 30 seconds

@@ -43,7 +43,7 @@ interface KitchenState {
     setLastUpdated: () => void;
 }
 
-export const useKitchenStore = create<KitchenState>((set, get) => ({
+export const useKitchenStore = create<KitchenState>((set) => ({
     orders: [],
     selectedOrderId: null,
     soundEnabled: true,
@@ -141,7 +141,8 @@ export const useKitchenStore = create<KitchenState>((set, get) => ({
 export const playNotificationSound = async () => {
     try {
         // Simple "ding" sound in base64 to avoid file dependency issues
-        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+        const audioContext = new AudioCtx();
         const oscillator = audioContext.createOscillator();
         const gainNode = audioContext.createGain();
 

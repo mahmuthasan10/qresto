@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, Button } from '@/components/ui';
+import { Modal } from '@/components/ui';
 import { publicApi } from '@/lib/api';
 import { AlertCircle, User } from 'lucide-react';
 
@@ -37,12 +37,6 @@ export function TableSelectionModal({ isOpen, onClose, onSelect, currentTableId,
             // For now assuming we pass it or the endpoint can infer from session (if any).
             // Actually my controller implementation requires restaurantId query param for public access.
 
-            const url = restaurantId
-                ? `/public/tables?restaurantId=${restaurantId}&isActive=true`
-                : '/public/tables'; // Fallback or different endpoint? 
-
-            // Wait, I created `/api/v1/treats/active-tables` in TreatController which also expected restaurantId.
-            // Let's use that one.
             const response = await publicApi.get(`/treats/active-tables${restaurantId ? `?restaurantId=${restaurantId}` : ''}`);
             setTables(response.data);
         } catch (err) {

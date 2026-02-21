@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useRef, ChangeEvent } from 'react';
-import { uploadImage, CloudinaryUploadResult, getThumbnailUrl } from '@/lib/cloudinary';
-import { Upload, X, Loader2, Image as ImageIcon } from 'lucide-react';
+import { uploadImage, getThumbnailUrl } from '@/lib/cloudinary';
+import { X, Loader2, Image as ImageIcon } from 'lucide-react';
 
 interface ImageUploadProps {
     value?: string;

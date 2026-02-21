@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Button, Card, CardBody, Badge, Modal, Tabs, Textarea } from '@/components/ui';
 import {
     MapPin, Clock, Plus, Minus, ShoppingCart, ArrowLeft,
-    ChefHat, CheckCircle, X, AlertCircle
+    ChefHat, CheckCircle
 } from 'lucide-react';
 
 // Mock data
@@ -34,7 +34,7 @@ export default function CustomerWireframe() {
     const [cart, setCart] = useState<CartItem[]>([]);
     const [selectedItem, setSelectedItem] = useState<typeof menuItems[0] | null>(null);
     const [orderStatus, setOrderStatus] = useState<OrderStatus>('pending');
-    const [sessionTime, setSessionTime] = useState(1800); // 30 minutes
+    const [sessionTime] = useState(1800); // 30 minutes
 
     const addToCart = (item: typeof menuItems[0]) => {
         setCart(prev => {

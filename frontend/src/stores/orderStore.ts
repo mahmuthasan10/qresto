@@ -84,8 +84,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
             const currentFilters = filters || get().filters;
             const { page, limit } = get().pagination;
 
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const params: any = { page, limit };
+            const params: Record<string, string | number> = { page, limit };
             if (currentFilters.status && currentFilters.status !== 'all') {
                 params.status = currentFilters.status;
             }

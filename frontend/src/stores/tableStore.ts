@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import api from '@/lib/api';
+import { AxiosError } from 'axios';
 
 interface Table {
     id: number;
@@ -26,7 +27,7 @@ interface TableState {
     clearError: () => void;
 }
 
-export const useTableStore = create<TableState>((set, get) => ({
+export const useTableStore = create<TableState>((set) => ({
     tables: [],
     isLoading: false,
     error: null,
@@ -36,7 +37,8 @@ export const useTableStore = create<TableState>((set, get) => ({
         try {
             const response = await api.get('/tables');
             set({ tables: response.data.tables || [], isLoading: false });
-        } catch (error: any) {
+        } catch (unknownError) {
+            const error = unknownError as AxiosError<{ error: string }>;
             set({
                 error: error.response?.data?.error || 'Masalar yüklenirken hata oluştu',
                 isLoading: false,
@@ -54,7 +56,8 @@ export const useTableStore = create<TableState>((set, get) => ({
                 isLoading: false,
             }));
             return true;
-        } catch (error: any) {
+        } catch (unknownError) {
+            const error = unknownError as AxiosError<{ error: string }>;
             set({
                 error: error.response?.data?.error || 'Masa eklenirken hata oluştu',
                 isLoading: false,
@@ -75,7 +78,8 @@ export const useTableStore = create<TableState>((set, get) => ({
                 isLoading: false,
             }));
             return true;
-        } catch (error: any) {
+        } catch (unknownError) {
+            const error = unknownError as AxiosError<{ error: string }>;
             set({
                 error: error.response?.data?.error || 'Masa güncellenirken hata oluştu',
                 isLoading: false,
@@ -93,7 +97,8 @@ export const useTableStore = create<TableState>((set, get) => ({
                 isLoading: false,
             }));
             return true;
-        } catch (error: any) {
+        } catch (unknownError) {
+            const error = unknownError as AxiosError<{ error: string }>;
             set({
                 error: error.response?.data?.error || 'Masa silinirken hata oluştu',
                 isLoading: false,
@@ -112,7 +117,8 @@ export const useTableStore = create<TableState>((set, get) => ({
                 ),
             }));
             return newQrCode;
-        } catch (error: any) {
+        } catch (unknownError) {
+            const error = unknownError as AxiosError<{ error: string }>;
             set({
                 error: error.response?.data?.error || 'QR kod yenileme başarısız',
             });
@@ -124,7 +130,8 @@ export const useTableStore = create<TableState>((set, get) => ({
         try {
             const response = await api.get(`/tables/${id}/qr`);
             return response.data.qrCodeUrl || response.data.qrCode;
-        } catch (error: any) {
+        } catch (unknownError) {
+            const error = unknownError as AxiosError<{ error: string }>;
             set({
                 error: error.response?.data?.error || 'QR kod alınamadı',
             });

@@ -2,13 +2,14 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { publicApi } from '@/lib/api';
 import { useCartStore } from '@/stores/cartStore';
-import { Button, Card, CardBody, Badge, Modal } from '@/components/ui';
+import { Button, Card, CardBody, Modal } from '@/components/ui';
 import SessionTimer from '@/components/SessionTimer';
 import { TableSelectionModal } from '@/components/Treats/TableSelectionModal';
 import ThemeProvider from '@/components/providers/ThemeProvider';
-import { ShoppingCart, Plus, Minus, Clock, MapPin, X, AlertTriangle, ChevronRight, Gift, Lock, Globe, Search } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, Clock, MapPin, X, AlertTriangle, Gift, Lock, Globe, Search } from 'lucide-react';
 
 interface MenuItem {
     id: number;
@@ -111,7 +112,6 @@ export default function MenuPage() {
         sessionToken,
         setSession,
         ensureTable,
-        tableNumber: storedTableNumber
     } = useCartStore();
 
     // Fetch menu data
@@ -361,9 +361,11 @@ export default function MenuPage() {
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 {restaurant?.logoUrl ? (
-                                    <img
+                                    <Image
                                         src={restaurant.logoUrl}
                                         alt={restaurant.name}
+                                        width={40}
+                                        height={40}
                                         className="w-10 h-10 rounded-full object-cover"
                                     />
                                 ) : (
@@ -488,9 +490,9 @@ export default function MenuPage() {
                                     onClick={() => setSelectedItem(item)}
                                     className="flex-shrink-0 w-40 bg-white rounded-xl shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
                                 >
-                                    <div className="h-24 bg-gray-100">
+                                    <div className="h-24 bg-gray-100 relative">
                                         {item.imageUrl ? (
-                                            <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+                                            <Image src={item.imageUrl} alt={item.name} fill className="object-cover" sizes="160px" />
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center text-3xl">🍽️</div>
                                         )}
@@ -575,10 +577,12 @@ export default function MenuPage() {
                                                             {/* Image or Add Button */}
                                                             <div className="w-24 relative">
                                                                 {item.imageUrl ? (
-                                                                    <img
+                                                                    <Image
                                                                         src={item.imageUrl}
                                                                         alt={item.name}
-                                                                        className="w-full h-full object-cover"
+                                                                        fill
+                                                                        className="object-cover"
+                                                                        sizes="96px"
                                                                     />
                                                                 ) : (
                                                                     <div className="w-full h-full bg-gray-100 flex items-center justify-center text-3xl">
@@ -681,12 +685,14 @@ export default function MenuPage() {
                     {selectedItem && (
                         <div>
                             {/* Image */}
-                            <div className="h-48 bg-gray-100 -mx-6 -mt-4 mb-4">
+                            <div className="h-48 bg-gray-100 -mx-6 -mt-4 mb-4 relative">
                                 {selectedItem.imageUrl ? (
-                                    <img
+                                    <Image
                                         src={selectedItem.imageUrl}
                                         alt={selectedItem.name}
-                                        className="w-full h-full object-cover"
+                                        fill
+                                        className="object-cover"
+                                        sizes="(max-width: 768px) 100vw, 500px"
                                     />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center text-6xl">🍽️</div>

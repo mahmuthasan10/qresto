@@ -45,7 +45,7 @@ export default function SessionTimer({ onExpire, className = '' }: SessionTimerP
 
                 setIsExpired(false);
                 setIsWarning(false);
-            } catch (error: any) {
+            } catch {
                 // Sunucu artık geçersiz diyorsa gerçekten süresi dolmuş kabul et
                 setIsExpired(true);
                 clearSession();

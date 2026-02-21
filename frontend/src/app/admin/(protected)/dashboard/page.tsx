@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useAuthStore } from '@/stores/authStore';
 import { Card, CardBody, CardHeader, Badge } from '@/components/ui';
 import {
     ClipboardList,
@@ -9,10 +8,9 @@ import {
     Users,
     TrendingUp,
     Clock,
-    Eye
 } from 'lucide-react';
 import api from '@/lib/api';
-import { useSocket, socketService } from '@/lib/socket';
+import { useSocket } from '@/lib/socket';
 import toast from 'react-hot-toast';
 
 interface DashboardStats {
@@ -36,7 +34,6 @@ interface Order {
 }
 
 export default function DashboardPage() {
-    const { restaurant } = useAuthStore();
     const [stats, setStats] = useState<DashboardStats>({
         todayOrders: 0,
         todayRevenue: 0,

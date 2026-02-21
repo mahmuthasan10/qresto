@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/stores/authStore';
-import { Button, Input, Card, CardBody, CardHeader, Tabs, Textarea } from '@/components/ui';
+import { Button, Input, Card, CardBody, CardHeader, Textarea } from '@/components/ui';
 import {
     Building,
     MapPin,
@@ -132,8 +132,9 @@ export default function SettingsPage() {
             const response = await api.put('/restaurant/profile', generalForm);
             updateRestaurant(response.data.restaurant);
             toast.success('Bilgiler güncellendi');
-        } catch (error: any) {
-            toast.error(error.response?.data?.error || 'Güncelleme başarısız');
+        } catch (error: unknown) {
+            const err = error as { response?: { data?: { error?: string } } };
+            toast.error(err.response?.data?.error || 'Güncelleme başarısız');
         } finally {
             setIsLoading(false);
         }
@@ -150,8 +151,9 @@ export default function SettingsPage() {
             const response = await api.patch('/restaurant/location', locationForm);
             updateRestaurant(response.data.restaurant);
             toast.success('Konum ayarları güncellendi');
-        } catch (error: any) {
-            toast.error(error.response?.data?.error || 'Güncelleme başarısız');
+        } catch (error: unknown) {
+            const err = error as { response?: { data?: { error?: string } } };
+            toast.error(err.response?.data?.error || 'Güncelleme başarısız');
         } finally {
             setIsLoading(false);
         }
@@ -170,8 +172,9 @@ export default function SettingsPage() {
             });
             updateRestaurant(response.data.restaurant);
             toast.success('Oturum ayarları güncellendi');
-        } catch (error: any) {
-            toast.error(error.response?.data?.error || 'Güncelleme başarısız');
+        } catch (error: unknown) {
+            const err = error as { response?: { data?: { error?: string } } };
+            toast.error(err.response?.data?.error || 'Güncelleme başarısız');
         } finally {
             setIsLoading(false);
         }
@@ -203,8 +206,9 @@ export default function SettingsPage() {
                 newPassword: '',
                 confirmPassword: '',
             });
-        } catch (error: any) {
-            toast.error(error.response?.data?.error || 'Şifre değiştirilemedi');
+        } catch (error: unknown) {
+            const err = error as { response?: { data?: { error?: string } } };
+            toast.error(err.response?.data?.error || 'Şifre değiştirilemedi');
         } finally {
             setIsLoading(false);
         }
@@ -225,7 +229,7 @@ export default function SettingsPage() {
                 });
                 toast.success('Konum alındı');
             },
-            (error) => {
+            () => {
                 toast.error('Konum alınamadı');
             }
         );
@@ -396,8 +400,9 @@ export default function SettingsPage() {
             });
             updateRestaurant(response.data.restaurant);
             toast.success('Tema ayarları güncellendi');
-        } catch (error: any) {
-            toast.error(error.response?.data?.error || 'Tema güncellenemedi');
+        } catch (error: unknown) {
+            const err = error as { response?: { data?: { error?: string } } };
+            toast.error(err.response?.data?.error || 'Tema güncellenemedi');
         } finally {
             setIsLoading(false);
         }

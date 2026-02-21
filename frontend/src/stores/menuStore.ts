@@ -51,7 +51,7 @@ interface MenuState {
     clearError: () => void;
 }
 
-export const useMenuStore = create<MenuState>((set, get) => ({
+export const useMenuStore = create<MenuState>((set) => ({
     categories: [],
     menuItems: [],
     isLoading: false,

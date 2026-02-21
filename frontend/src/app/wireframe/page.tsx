@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Card, CardBody, Button } from '@/components/ui';
+import { Card, CardBody } from '@/components/ui';
 import { Users, Settings, ChefHat, Palette } from 'lucide-react';
 
 export default function WireframePage() {

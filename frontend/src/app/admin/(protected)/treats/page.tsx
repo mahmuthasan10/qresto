@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
 import { Card, CardBody, Badge, Button } from '@/components/ui';
-import { Gift, Clock, CheckCircle, XCircle, Ban, ArrowRight, MessageSquare } from 'lucide-react';
+import { Gift, Clock, CheckCircle, Ban, ArrowRight, MessageSquare } from 'lucide-react';
 
 interface Treat {
     id: number;
@@ -28,7 +28,7 @@ interface Treat {
 export default function TreatsPage() {
     const [treats, setTreats] = useState<Treat[]>([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const [, setError] = useState<string | null>(null);
 
     const fetchTreats = async () => {
         try {

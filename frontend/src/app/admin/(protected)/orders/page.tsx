@@ -3,14 +3,12 @@
 import { useEffect, useState } from 'react';
 import { useOrderStore, Order, OrderStatus } from '@/stores/orderStore';
 import { useTableStore } from '@/stores/tableStore';
-import { Button, Card, CardBody, CardHeader, Badge, Modal, Tabs, Input } from '@/components/ui';
+import { Button, Card, CardBody, Modal, Tabs, Input } from '@/components/ui';
 import {
     Search,
-    Filter,
     Eye,
     ChevronLeft,
     ChevronRight,
-    Clock,
     CheckCircle,
     XCircle,
     ChefHat,

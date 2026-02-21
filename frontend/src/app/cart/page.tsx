@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { useCartStore } from '@/stores/cartStore';
 import { publicApi } from '@/lib/api';
-import { Button, Card, CardBody, Input, Modal } from '@/components/ui';
+import { Button, Card, CardBody, Modal } from '@/components/ui';
 import { Minus, Plus, Trash2, ChevronLeft, ShoppingBag, CreditCard, Banknote, AlertTriangle } from 'lucide-react';
 
 export default function CartPage() {
@@ -15,7 +16,6 @@ export default function CartPage() {
         tableNumber,
         restaurantName,
         updateQuantity,
-        updateNotes,
         removeItem,
         clearCart,
         getTotalAmount,
@@ -139,9 +139,9 @@ export default function CartPage() {
                         <CardBody className="p-4">
                             <div className="flex gap-4">
                                 {/* Image */}
-                                <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                                <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 relative">
                                     {item.imageUrl ? (
-                                        <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+                                        <Image src={item.imageUrl} alt={item.name} fill className="object-cover" sizes="80px" />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center text-2xl">🍽️</div>
                                     )}

@@ -80,7 +80,7 @@ export default function OrderTrackingPage() {
 
     // WebSocket for real-time updates
     useEffect(() => {
-        const socket = socketService.connect();
+        socketService.connect();
 
         socketService.onOrderStatusUpdated((data) => {
             if (data.orderNumber === orderNumber) {
