@@ -127,12 +127,20 @@ exports.getStats = async (req, res, next) => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        const [todayOrders, totalOrders, activeTables, revenue] = await Promise.all([
-            // Bugünkü siparişler
+        const [todayOrders, todayValidOrders, totalOrders, activeTables, revenue] = await Promise.all([
+            // Bugünkü siparişler (tümü)
             prisma.order.count({
                 where: {
                     restaurantId: req.restaurantId,
                     createdAt: { gte: today }
+                }
+            }),
+            // Bugünkü siparişler (iptal hariç - ortalama için)
+            prisma.order.count({
+                where: {
+                    restaurantId: req.restaurantId,
+                    createdAt: { gte: today },
+                    status: { not: 'cancelled' }
                 }
             }),
             // Toplam siparişler
@@ -158,12 +166,18 @@ exports.getStats = async (req, res, next) => {
             })
         ]);
 
+        const todayRevenue = Number(revenue._sum.totalAmount || 0);
+        const averageOrderValue = todayValidOrders > 0
+            ? Math.round((todayRevenue / todayValidOrders) * 100) / 100
+            : 0;
+
         res.json({
             stats: {
                 todayOrders,
                 totalOrders,
                 activeTables,
-                todayRevenue: revenue._sum.totalAmount || 0
+                todayRevenue,
+                averageOrderValue
             }
         });
     } catch (error) {

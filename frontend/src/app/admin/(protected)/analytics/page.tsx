@@ -70,17 +70,25 @@ export default function AnalyticsPage() {
     const fetchAnalytics = useCallback(async () => {
         try {
             setIsLoading(true);
-            const [summaryRes, dailyRes, topRes, statusRes] = await Promise.all([
+            const results = await Promise.allSettled([
                 api.get(`/analytics/summary?period=${period}`),
                 api.get(`/analytics/daily?period=${period}`),
                 api.get(`/analytics/top-items?period=${period}&limit=5`),
                 api.get(`/analytics/status-distribution?period=${period}`)
             ]);
 
-            setSummary(summaryRes.data.summary);
-            setDailyTrend(dailyRes.data.dailyTrend);
-            setTopItems(topRes.data.topItems);
-            setStatusDist(statusRes.data.statusDistribution);
+            if (results[0].status === 'fulfilled') setSummary(results[0].value.data.summary);
+            if (results[1].status === 'fulfilled') setDailyTrend(results[1].value.data.dailyTrend);
+            if (results[2].status === 'fulfilled') setTopItems(results[2].value.data.topItems);
+            if (results[3].status === 'fulfilled') setStatusDist(results[3].value.data.statusDistribution);
+
+            const failedCount = results.filter(r => r.status === 'rejected').length;
+            if (failedCount > 0) {
+                console.error('Analytics fetch errors:', results.filter(r => r.status === 'rejected'));
+                if (failedCount === results.length) {
+                    toast.error('Analitik verileri yüklenirken hata oluştu');
+                }
+            }
         } catch (error) {
             console.error('Analytics fetch error:', error);
             toast.error('Analitik verileri yüklenirken hata oluştu');

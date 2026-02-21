@@ -127,10 +127,9 @@ const TreatController = {
                             tableId: treat.toTableId,
                             tableNumber: treat.toTable.tableNumber,
                             orderNumber: orderNumber,
-                            status: 'confirmed', // Directly confirmed so kitchen sees it
-                            totalAmount: 0, // It's a treat for the receiver
-                            isTreat: true, // You might want to add this field to schema later, for now just logic
-                            customerNotes: `Masa ${treat.fromTable.tableNumber} tarafından ikram! ${treat.note ? `Not: ${treat.note}` : ''}`,
+                            status: 'confirmed',
+                            totalAmount: 0,
+                            customerNotes: `🎁 İKRAM - Masa ${treat.fromTable.tableNumber} tarafından ikram! ${treat.note ? `Not: ${treat.note}` : ''}`,
                             confirmedAt: new Date(),
                             orderItems: {
                                 create: {

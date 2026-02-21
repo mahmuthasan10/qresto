@@ -27,6 +27,7 @@ function getSocket(): Socket {
 class SocketService {
     private restaurantId: number | null = null;
     private statusListeners: Set<(status: ConnectionStatus) => void> = new Set();
+    private heartbeatInterval: ReturnType<typeof setInterval> | null = null;
 
     connect(): Socket {
         const s = getSocket();
@@ -62,8 +63,11 @@ class SocketService {
                 this.notifyStatus('connecting');
             });
 
-            // Heartbeat/ping every 25 seconds
-            setInterval(() => {
+            // Heartbeat/ping every 25 seconds (tek bir interval)
+            if (this.heartbeatInterval) {
+                clearInterval(this.heartbeatInterval);
+            }
+            this.heartbeatInterval = setInterval(() => {
                 if (s.connected) {
                     s.emit('ping');
                 }
@@ -74,6 +78,10 @@ class SocketService {
     }
 
     disconnect(): void {
+        if (this.heartbeatInterval) {
+            clearInterval(this.heartbeatInterval);
+            this.heartbeatInterval = null;
+        }
         if (socket) {
             socket.disconnect();
             socket = null;

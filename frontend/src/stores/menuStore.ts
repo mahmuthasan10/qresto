@@ -233,7 +233,8 @@ export const useMenuStore = create<MenuState>((set, get) => ({
             const formData = new FormData();
             formData.append('image', file);
             const response = await api.post(`/menu-items/${id}/image`, formData, {
-                headers: { 'Content-Type': 'multipart/form-data' },
+                headers: { 'Content-Type': undefined },
+                timeout: 30000,
             });
             const imageUrl = response.data.imageUrl;
             set(state => ({

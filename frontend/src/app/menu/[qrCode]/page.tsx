@@ -110,6 +110,7 @@ export default function MenuPage() {
         getTotalAmount,
         sessionToken,
         setSession,
+        ensureTable,
         tableNumber: storedTableNumber
     } = useCartStore();
 
@@ -137,9 +138,11 @@ export default function MenuPage() {
 
     useEffect(() => {
         if (tableQR) {
+            // Farklı masa QR'ı ile girilmişse sepeti temizle
+            ensureTable(tableQR);
             fetchMenu();
         }
-    }, [tableQR, fetchMenu]);
+    }, [tableQR, fetchMenu, ensureTable]);
 
     // Not: QR ile menüye ilk girişte direkt menü görünsün.
     // Lokasyon/onay modalını sadece siparişe başlarken göstereceğiz.
@@ -181,7 +184,8 @@ export default function MenuPage() {
                     session.token,
                     table.tableNumber,
                     restaurant.name,
-                    new Date(session.expiresAt)
+                    new Date(session.expiresAt),
+                    tableQR
                 );
                 setShowLocationModal(false);
             }
@@ -230,7 +234,8 @@ export default function MenuPage() {
                 session.token,
                 table.tableNumber,
                 restaurant.name,
-                new Date(session.expiresAt)
+                new Date(session.expiresAt),
+                tableQR
             );
             setShowLocationModal(false);
         } catch (err: any) {

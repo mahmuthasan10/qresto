@@ -1,11 +1,23 @@
 const cloudinary = require('cloudinary').v2;
 const streamifier = require('streamifier');
+const { logger } = require('../utils/logger');
 
 // Configure Cloudinary
+const CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME;
+const API_KEY = process.env.CLOUDINARY_API_KEY;
+const API_SECRET = process.env.CLOUDINARY_API_SECRET;
+
+const isConfigured = CLOUD_NAME && API_KEY && API_SECRET
+    && CLOUD_NAME !== 'demo' && API_KEY !== '12345678';
+
+if (!isConfigured) {
+    logger.warn('Cloudinary credentials not configured or using placeholder values. Image upload will not work.');
+}
+
 cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET
+    cloud_name: CLOUD_NAME,
+    api_key: API_KEY,
+    api_secret: API_SECRET
 });
 
 class CloudinaryService {
@@ -16,14 +28,28 @@ class CloudinaryService {
      * @returns {Promise<Object>} - Cloudinary upload result
      */
     static uploadImage(buffer, folder = 'qresto/menu-items') {
+        if (!isConfigured) {
+            const err = new Error(
+                'Resim yükleme servisi yapılandırılmamış. Cloudinary hesabı oluşturup CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY ve CLOUDINARY_API_SECRET ortam değişkenlerini ayarlayın. (cloudinary.com adresinden ücretsiz hesap açabilirsiniz)'
+            );
+            err.statusCode = 503;
+            return Promise.reject(err);
+        }
+
         return new Promise((resolve, reject) => {
             const uploadStream = cloudinary.uploader.upload_stream(
                 {
                     folder: folder,
-                    resource_type: 'image'
+                    resource_type: 'image',
+                    transformation: [
+                        { quality: 'auto', fetch_format: 'auto' }
+                    ]
                 },
                 (error, result) => {
-                    if (error) return reject(error);
+                    if (error) {
+                        logger.error('Cloudinary upload error:', error.message);
+                        return reject(error);
+                    }
                     resolve(result);
                 }
             );

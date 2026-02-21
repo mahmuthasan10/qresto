@@ -16,7 +16,8 @@ import {
     Bell,
     ChevronDown,
     Gift,
-    BarChart3
+    BarChart3,
+    ChefHat
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -29,6 +30,7 @@ const menuItems = [
     { id: 'menu', label: 'Menü', icon: UtensilsCrossed, href: '/admin/menu' },
     { id: 'tables', label: 'Masalar', icon: Grid3X3, href: '/admin/tables' },
     { id: 'orders', label: 'Siparişler', icon: ClipboardList, href: '/admin/orders' },
+    { id: 'kitchen', label: 'Mutfak', icon: ChefHat, href: '/admin/kitchen' },
     { id: 'treats', label: 'İkramlar', icon: Gift, href: '/admin/treats' },
     { id: 'analytics', label: 'Analitik', icon: BarChart3, href: '/admin/analytics' },
     { id: 'settings', label: 'Ayarlar', icon: Settings, href: '/admin/settings' },

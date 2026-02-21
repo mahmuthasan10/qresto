@@ -92,11 +92,12 @@ export default function DashboardPage() {
 
             // Fetch stats
             const statsResponse = await api.get('/restaurant/stats');
+            const s = statsResponse.data.stats;
             setStats({
-                todayOrders: statsResponse.data.todayOrders || 0,
-                todayRevenue: statsResponse.data.todayRevenue || 0,
-                activeTables: statsResponse.data.activeTables || 0,
-                averageOrderValue: statsResponse.data.averageOrderValue || 0,
+                todayOrders: s?.todayOrders || 0,
+                todayRevenue: Number(s?.todayRevenue) || 0,
+                activeTables: s?.activeTables || 0,
+                averageOrderValue: Number(s?.averageOrderValue) || 0,
             });
 
             // Fetch active orders

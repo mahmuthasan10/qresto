@@ -228,6 +228,12 @@ exports.uploadImage = async (req, res, next) => {
             imageUrl: updated.imageUrl
         });
     } catch (error) {
+        // Cloudinary yapılandırma hatası için daha açık mesaj
+        if (error.statusCode === 503 || error.message?.includes('yapılandırılmamış')) {
+            return res.status(503).json({
+                error: 'Resim yükleme servisi yapılandırılmamış. Lütfen Cloudinary ayarlarınızı kontrol edin.'
+            });
+        }
         next(error);
     }
 };

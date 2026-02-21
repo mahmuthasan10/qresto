@@ -28,6 +28,18 @@ const errorHandler = (err, req, res, next) => {
         });
     }
 
+    // Multer errors (dosya yükleme)
+    if (err.name === 'MulterError') {
+        if (err.code === 'LIMIT_FILE_SIZE') {
+            return res.status(400).json({
+                error: 'Dosya boyutu çok büyük. Maksimum 5MB yüklenebilir.'
+            });
+        }
+        return res.status(400).json({
+            error: 'Dosya yükleme hatası: ' + err.message
+        });
+    }
+
     // JWT errors
     if (err.name === 'JsonWebTokenError') {
         return res.status(401).json({

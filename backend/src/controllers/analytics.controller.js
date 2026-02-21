@@ -86,36 +86,37 @@ exports.getDailyTrend = async (req, res, next) => {
         const { startDate, days } = getDateRange(req.query.period);
         const restaurantId = req.restaurantId;
 
-        const results = [];
+        // Tek sorguda tüm günleri getir (N+1 yerine 1 sorgu)
+        const orders = await prisma.$queryRaw`
+            SELECT
+                DATE(created_at) as date,
+                COUNT(*)::int as orders,
+                COALESCE(SUM(CASE WHEN status != 'cancelled' THEN total_amount ELSE 0 END), 0)::float as revenue
+            FROM orders
+            WHERE restaurant_id = ${restaurantId}
+              AND created_at >= ${startDate}
+            GROUP BY DATE(created_at)
+            ORDER BY date ASC
+        `;
 
+        // Tüm günleri kapsayan map oluştur
+        const orderMap = {};
+        for (const row of orders) {
+            const dateStr = new Date(row.date).toISOString().split('T')[0];
+            orderMap[dateStr] = {
+                date: dateStr,
+                orders: Number(row.orders),
+                revenue: Number(row.revenue)
+            };
+        }
+
+        // Boş günleri de dahil et
+        const results = [];
         for (let i = 0; i < days; i++) {
             const date = new Date(startDate);
             date.setDate(date.getDate() + i);
-            const nextDate = new Date(date);
-            nextDate.setDate(nextDate.getDate() + 1);
-
-            const [orderCount, revenue] = await Promise.all([
-                prisma.order.count({
-                    where: {
-                        restaurantId,
-                        createdAt: { gte: date, lt: nextDate }
-                    }
-                }),
-                prisma.order.aggregate({
-                    where: {
-                        restaurantId,
-                        createdAt: { gte: date, lt: nextDate },
-                        status: { not: 'cancelled' }
-                    },
-                    _sum: { totalAmount: true }
-                })
-            ]);
-
-            results.push({
-                date: date.toISOString().split('T')[0],
-                orders: orderCount,
-                revenue: Number(revenue._sum.totalAmount || 0)
-            });
+            const dateStr = date.toISOString().split('T')[0];
+            results.push(orderMap[dateStr] || { date: dateStr, orders: 0, revenue: 0 });
         }
 
         res.json({ dailyTrend: results });

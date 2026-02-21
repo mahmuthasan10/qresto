@@ -259,7 +259,8 @@ export default function MenuPage() {
         if (success) {
             toast.success('Resim yüklendi');
         } else {
-            toast.error('Resim yüklenemedi');
+            const storeError = useMenuStore.getState().error;
+            toast.error(storeError || 'Resim yüklenemedi. Cloudinary ayarlarını kontrol edin.');
         }
         setUploadingImageId(null);
         if (imageInputRef.current) imageInputRef.current.value = '';

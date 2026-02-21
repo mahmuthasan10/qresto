@@ -15,6 +15,7 @@ interface CartState {
     items: CartItem[];
     sessionToken: string | null;
     tableNumber: string | null;
+    tableQrCode: string | null;
     restaurantName: string | null;
     expiresAt: Date | null;
 
@@ -23,8 +24,9 @@ interface CartState {
     updateQuantity: (menuItemId: number, quantity: number) => void;
     updateNotes: (menuItemId: number, notes: string) => void;
     clearCart: () => void;
-    setSession: (token: string, tableNumber: string, restaurantName: string, expiresAt: Date) => void;
+    setSession: (token: string, tableNumber: string, restaurantName: string, expiresAt: Date, qrCode?: string) => void;
     clearSession: () => void;
+    ensureTable: (qrCode: string) => void;
     getTotalAmount: () => number;
     getTotalItems: () => number;
 }
@@ -35,6 +37,7 @@ export const useCartStore = create<CartState>()(
             items: [],
             sessionToken: null,
             tableNumber: null,
+            tableQrCode: null,
             restaurantName: null,
             expiresAt: null,
 
@@ -83,12 +86,13 @@ export const useCartStore = create<CartState>()(
 
             clearCart: () => set({ items: [] }),
 
-            setSession: (token, tableNumber, restaurantName, expiresAt) => {
+            setSession: (token, tableNumber, restaurantName, expiresAt, qrCode) => {
                 set({
                     sessionToken: token,
                     tableNumber,
                     restaurantName,
                     expiresAt,
+                    ...(qrCode ? { tableQrCode: qrCode } : {}),
                 });
             },
 
@@ -97,9 +101,27 @@ export const useCartStore = create<CartState>()(
                     items: [],
                     sessionToken: null,
                     tableNumber: null,
+                    tableQrCode: null,
                     restaurantName: null,
                     expiresAt: null,
                 });
+            },
+
+            ensureTable: (qrCode) => {
+                const currentQr = get().tableQrCode;
+                if (currentQr && currentQr !== qrCode) {
+                    // Farklı masa QR'ı → sepeti ve oturumu temizle
+                    set({
+                        items: [],
+                        sessionToken: null,
+                        tableNumber: null,
+                        tableQrCode: qrCode,
+                        restaurantName: null,
+                        expiresAt: null,
+                    });
+                } else if (!currentQr) {
+                    set({ tableQrCode: qrCode });
+                }
             },
 
             getTotalAmount: () => {
