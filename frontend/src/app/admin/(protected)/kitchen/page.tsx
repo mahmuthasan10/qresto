@@ -81,7 +81,7 @@ export default function AdminKitchenPage() {
         };
     }, [socket, handleNewOrder, handleStatusUpdate, fetchOrders]);
 
-    const handleStatusUpdateClick = async (orderId: number, currentStatus: KitchenOrderStatus) => {
+    const handleStatusUpdateClick = useCallback(async (orderId: number, currentStatus: KitchenOrderStatus) => {
         const statusFlow: Partial<Record<KitchenOrderStatus, KitchenOrderStatus>> = {
             pending: 'confirmed',
             confirmed: 'preparing',
@@ -95,7 +95,7 @@ export default function AdminKitchenPage() {
         if (success) {
             toast.success('Sipariş durumu güncellendi');
         }
-    };
+    }, [updateOrderStatus]);
 
     const onDragEnd = async (result: DropResult) => {
         const { destination, source, draggableId } = result;
@@ -134,7 +134,7 @@ export default function AdminKitchenPage() {
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [orders, selectedOrderId, selectOrder]);
+    }, [orders, selectedOrderId, selectOrder, handleStatusUpdateClick]);
 
     const pendingOrders = orders.filter(o => o.status === 'pending' || o.status === 'confirmed');
     const preparingOrders = orders.filter(o => o.status === 'preparing');

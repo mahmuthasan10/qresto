@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/authStore';
 
@@ -11,18 +11,17 @@ interface AuthGuardProps {
 export default function AuthGuard({ children }: AuthGuardProps) {
     const router = useRouter();
     const { isAuthenticated, accessToken } = useAuthStore();
-    const [isLoading, setIsLoading] = useState(true);
+
+    // Derive loading state directly — no useState/useEffect needed
+    const isReady = isAuthenticated && !!accessToken;
 
     useEffect(() => {
-        // Check authentication status
         if (!isAuthenticated || !accessToken) {
             router.replace('/admin/login');
-        } else {
-            setIsLoading(false);
         }
     }, [isAuthenticated, accessToken, router]);
 
-    if (isLoading) {
+    if (!isReady) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-100">
                 <div className="flex flex-col items-center gap-4">

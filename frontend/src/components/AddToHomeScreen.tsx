@@ -11,14 +11,17 @@ interface BeforeInstallPromptEvent extends Event {
 export default function AddToHomeScreen() {
     const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
     const [showPrompt, setShowPrompt] = useState(false);
-    const [isInstalled, setIsInstalled] = useState(false);
+    // Initialize isInstalled synchronously to avoid setState in useEffect
+    const [isInstalled, setIsInstalled] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return window.matchMedia('(display-mode: standalone)').matches;
+        }
+        return false;
+    });
 
     useEffect(() => {
-        // Check if already installed
-        if (window.matchMedia('(display-mode: standalone)').matches) {
-            setIsInstalled(true);
-            return;
-        }
+        // Already installed, no need to listen for install prompt
+        if (isInstalled) return;
 
         const handler = (e: Event) => {
             e.preventDefault();

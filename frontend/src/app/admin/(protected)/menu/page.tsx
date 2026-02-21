@@ -56,7 +56,7 @@ export default function MenuPage() {
     } = useMenuStore();
 
     const [searchTerm, setSearchTerm] = useState('');
-    const [expandedCategories, setExpandedCategories] = useState<number[]>([]);
+    const [userExpandedCategories, setUserExpandedCategories] = useState<number[] | null>(null);
 
     // Category Modal
     const [showCategoryModal, setShowCategoryModal] = useState(false);
@@ -95,17 +95,15 @@ export default function MenuPage() {
         fetchMenuItems();
     }, [fetchCategories, fetchMenuItems]);
 
-    useEffect(() => {
-        if (categories.length > 0 && expandedCategories.length === 0) {
-            setExpandedCategories([categories[0].id]);
-        }
-    }, [categories, expandedCategories.length]);
+    // Derive expandedCategories: if user hasn't interacted yet (null),
+    // default to first category expanded. No useEffect needed.
+    const expandedCategories = userExpandedCategories ?? (categories.length > 0 ? [categories[0].id] : []);
 
     const toggleCategory = (categoryId: number) => {
-        setExpandedCategories(prev =>
-            prev.includes(categoryId)
-                ? prev.filter(id => id !== categoryId)
-                : [...prev, categoryId]
+        setUserExpandedCategories(
+            expandedCategories.includes(categoryId)
+                ? expandedCategories.filter(id => id !== categoryId)
+                : [...expandedCategories, categoryId]
         );
     };
 

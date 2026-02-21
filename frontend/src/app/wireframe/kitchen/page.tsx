@@ -65,36 +65,16 @@ const initialOrders: KitchenOrder[] = [
     },
 ];
 
-export default function KitchenWireframe() {
-    const [orders, setOrders] = useState<KitchenOrder[]>(initialOrders);
-    const [soundEnabled, setSoundEnabled] = useState(true);
-    const [lastUpdate, setLastUpdate] = useState(new Date());
-    const [, setTick] = useState(0);
+interface OrderCardProps {
+    order: KitchenOrder;
+    nextStatus: OrderStatus | 'completed';
+    buttonLabel: string;
+    getRelativeTime: (date: Date) => string;
+    onMove: (orderId: string, newStatus: OrderStatus | 'completed') => void;
+}
 
-    // Update relative times every 30 seconds
-    useEffect(() => {
-        const interval = setInterval(() => setTick(t => t + 1), 30000);
-        return () => clearInterval(interval);
-    }, []);
-
-    const getRelativeTime = (date: Date) => {
-        const diff = Math.floor((Date.now() - date.getTime()) / 60000);
-        if (diff < 1) return 'Şimdi';
-        if (diff === 1) return '1 dk önce';
-        return `${diff} dk önce`;
-    };
-
-    const moveOrder = (orderId: string, newStatus: OrderStatus | 'completed') => {
-        if (newStatus === 'completed') {
-            setOrders(prev => prev.filter(o => o.id !== orderId));
-        } else {
-            setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
-        }
-    };
-
-    const getOrdersByStatus = (status: OrderStatus) => orders.filter(o => o.status === status);
-
-    const renderOrderCard = ({ order, nextStatus, buttonLabel }: { order: KitchenOrder; nextStatus: OrderStatus | 'completed'; buttonLabel: string }) => (
+function OrderCard({ order, nextStatus, buttonLabel, getRelativeTime, onMove }: OrderCardProps) {
+    return (
         <Card variant="order" className="mb-3">
             <CardBody className="p-4">
                 {/* Header */}
@@ -127,7 +107,7 @@ export default function KitchenWireframe() {
                                     <span className="font-medium">{item.name}</span>
                                     {item.note && (
                                         <p className="text-sm text-red-600 mt-1 bg-red-50 px-2 py-1 rounded">
-                                            ⚠️ {item.note}
+                                            {item.note}
                                         </p>
                                     )}
                                 </div>
@@ -141,56 +121,83 @@ export default function KitchenWireframe() {
                     className="w-full"
                     size="lg"
                     variant={order.status === 'ready' ? 'secondary' : 'primary'}
-                    onClick={() => moveOrder(order.id, nextStatus)}
+                    onClick={() => onMove(order.id, nextStatus)}
                 >
                     {buttonLabel}
                 </Button>
             </CardBody>
         </Card>
     );
+}
 
-    const renderColumn = ({
-        title,
-        status,
-        bgColor,
-        borderColor,
-        nextStatus,
-        buttonLabel
-    }: {
-        title: string;
-        status: OrderStatus;
-        bgColor: string;
-        borderColor: string;
-        nextStatus: OrderStatus | 'completed';
-        buttonLabel: string;
-    }) => {
-        const columnOrders = getOrdersByStatus(status);
+interface ColumnProps {
+    title: string;
+    status: OrderStatus;
+    bgColor: string;
+    borderColor: string;
+    nextStatus: OrderStatus | 'completed';
+    buttonLabel: string;
+    orders: KitchenOrder[];
+    getRelativeTime: (date: Date) => string;
+    onMove: (orderId: string, newStatus: OrderStatus | 'completed') => void;
+}
 
-        return (
-            <div className={`flex-1 ${bgColor} rounded-xl p-4 min-h-[calc(100vh-120px)]`}>
-                <div className={`flex items-center justify-between mb-4 pb-3 border-b-2 ${borderColor}`}>
-                    <h2 className="text-lg font-bold">{title}</h2>
-                    <Badge variant="count" count={columnOrders.length} />
-                </div>
-                <div className="space-y-3">
-                    {columnOrders.map(order => (
-                        <div key={order.id}>
-                            {renderOrderCard({
-                                order,
-                                nextStatus,
-                                buttonLabel
-                            })}
-                        </div>
-                    ))}
-                    {columnOrders.length === 0 && (
-                        <div className="text-center text-gray-400 py-12">
-                            <ChefHat className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                            <p>Sipariş yok</p>
-                        </div>
-                    )}
-                </div>
+function Column({ title, status, bgColor, borderColor, nextStatus, buttonLabel, orders, getRelativeTime, onMove }: ColumnProps) {
+    const columnOrders = orders.filter(o => o.status === status);
+
+    return (
+        <div className={`flex-1 ${bgColor} rounded-xl p-4 min-h-[calc(100vh-120px)]`}>
+            <div className={`flex items-center justify-between mb-4 pb-3 border-b-2 ${borderColor}`}>
+                <h2 className="text-lg font-bold">{title}</h2>
+                <Badge variant="count" count={columnOrders.length} />
             </div>
-        );
+            <div className="space-y-3">
+                {columnOrders.map(order => (
+                    <OrderCard
+                        key={order.id}
+                        order={order}
+                        nextStatus={nextStatus}
+                        buttonLabel={buttonLabel}
+                        getRelativeTime={getRelativeTime}
+                        onMove={onMove}
+                    />
+                ))}
+                {columnOrders.length === 0 && (
+                    <div className="text-center text-gray-400 py-12">
+                        <ChefHat className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                        <p>Sipariş yok</p>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
+export default function KitchenWireframe() {
+    const [orders, setOrders] = useState<KitchenOrder[]>(initialOrders);
+    const [soundEnabled, setSoundEnabled] = useState(true);
+    const [lastUpdate, setLastUpdate] = useState(new Date());
+    const [, setTick] = useState(0);
+
+    // Update relative times every 30 seconds
+    useEffect(() => {
+        const interval = setInterval(() => setTick(t => t + 1), 30000);
+        return () => clearInterval(interval);
+    }, []);
+
+    const getRelativeTime = (date: Date) => {
+        const diff = Math.floor((Date.now() - date.getTime()) / 60000);
+        if (diff < 1) return 'Şimdi';
+        if (diff === 1) return '1 dk önce';
+        return `${diff} dk önce`;
+    };
+
+    const moveOrder = (orderId: string, newStatus: OrderStatus | 'completed') => {
+        if (newStatus === 'completed') {
+            setOrders(prev => prev.filter(o => o.id !== orderId));
+        } else {
+            setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+        }
     };
 
     return (
@@ -229,30 +236,39 @@ export default function KitchenWireframe() {
 
             {/* Kanban Board */}
             <div className="p-4 flex gap-4 overflow-x-auto">
-                {renderColumn({
-                    title: "🔴 Yeni Siparişler",
-                    status: "pending",
-                    bgColor: "bg-red-50",
-                    borderColor: "border-red-500",
-                    nextStatus: "preparing",
-                    buttonLabel: "HAZIRLANIYOR"
-                })}
-                {renderColumn({
-                    title: "🟡 Hazırlanıyor",
-                    status: "preparing",
-                    bgColor: "bg-yellow-50",
-                    borderColor: "border-yellow-500",
-                    nextStatus: "ready",
-                    buttonLabel: "HAZIR"
-                })}
-                {renderColumn({
-                    title: "🟢 Hazır",
-                    status: "ready",
-                    bgColor: "bg-green-50",
-                    borderColor: "border-green-500",
-                    nextStatus: "completed",
-                    buttonLabel: "SERVİS EDİLDİ"
-                })}
+                <Column
+                    title="Yeni Siparisler"
+                    status="pending"
+                    bgColor="bg-red-50"
+                    borderColor="border-red-500"
+                    nextStatus="preparing"
+                    buttonLabel="HAZIRLANIYOR"
+                    orders={orders}
+                    getRelativeTime={getRelativeTime}
+                    onMove={moveOrder}
+                />
+                <Column
+                    title="Hazirlaniyor"
+                    status="preparing"
+                    bgColor="bg-yellow-50"
+                    borderColor="border-yellow-500"
+                    nextStatus="ready"
+                    buttonLabel="HAZIR"
+                    orders={orders}
+                    getRelativeTime={getRelativeTime}
+                    onMove={moveOrder}
+                />
+                <Column
+                    title="Hazir"
+                    status="ready"
+                    bgColor="bg-green-50"
+                    borderColor="border-green-500"
+                    nextStatus="completed"
+                    buttonLabel="SERVIS EDILDI"
+                    orders={orders}
+                    getRelativeTime={getRelativeTime}
+                    onMove={moveOrder}
+                />
             </div>
 
             {/* Keyboard Shortcuts Info */}

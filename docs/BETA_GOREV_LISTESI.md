@@ -43,9 +43,9 @@
 ---
 
 ### 4. BUG FIX ve GUVENLIK
-- [ ] `auth.controller.js:147` - `fs.appendFileSync` kaldir
+- [x] `auth.controller.js:147` - `fs.appendFileSync` kaldir (zaten temizlenmis, logger kullaniliyor)
 - [ ] `npm audit` calistir ve kritik zafiyetleri duzelt
-- [ ] Rate limiting: Login endpoint icin daha siki (5 deneme/15 dk)
+- [x] Rate limiting: Login endpoint icin daha siki (5 deneme/15 dk) — `index.js` authLimiter
 - [ ] Input sanitization kontrolu
 - [ ] CORS ayarlari gozden gecirme
 

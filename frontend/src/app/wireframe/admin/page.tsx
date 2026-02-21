@@ -10,6 +10,44 @@ import {
 
 type AdminView = 'dashboard' | 'menu' | 'tables' | 'orders' | 'settings';
 
+interface SidebarProps {
+    sidebarOpen: boolean;
+    view: AdminView;
+    menuTabs: { id: string; label: string; icon: React.ReactNode }[];
+    onViewChange: (view: AdminView) => void;
+    onClose: () => void;
+}
+
+function Sidebar({ sidebarOpen, view, menuTabs, onViewChange, onClose }: SidebarProps) {
+    return (
+        <aside className={`fixed inset-y-0 left-0 z-30 w-64 bg-gray-900 text-white transform transition-transform lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+            <div className="p-6 border-b border-gray-700">
+                <h1 className="text-xl font-bold">QResto Admin</h1>
+                <p className="text-sm text-gray-400 mt-1">Bella Italia</p>
+            </div>
+            <nav className="p-4 space-y-1">
+                {menuTabs.map(tab => (
+                    <button
+                        key={tab.id}
+                        onClick={() => { onViewChange(tab.id as AdminView); onClose(); }}
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${view === tab.id ? 'bg-orange-500 text-white' : 'text-gray-300 hover:bg-gray-800'
+                            }`}
+                    >
+                        {tab.icon}
+                        {tab.label}
+                    </button>
+                ))}
+            </nav>
+            <div className="absolute bottom-4 left-4 right-4">
+                <button className="w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg">
+                    <LogOut size={18} />
+                    Logout
+                </button>
+            </div>
+        </aside>
+    );
+}
+
 // Mock data
 const ordersMock = [
     { id: 'ORD-001', table: 5, items: '2x Pizza, 1x Kola', total: 265, status: 'preparing' as const, time: '5 dk önce' },
@@ -45,34 +83,6 @@ export default function AdminWireframe() {
         { id: 'orders', label: 'Siparişler', icon: <ClipboardList size={18} /> },
         { id: 'settings', label: 'Ayarlar', icon: <Settings size={18} /> },
     ];
-
-    const renderSidebar = () => (
-        <aside className={`fixed inset-y-0 left-0 z-30 w-64 bg-gray-900 text-white transform transition-transform lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-            <div className="p-6 border-b border-gray-700">
-                <h1 className="text-xl font-bold">🍕 QResto Admin</h1>
-                <p className="text-sm text-gray-400 mt-1">Bella Italia</p>
-            </div>
-            <nav className="p-4 space-y-1">
-                {menuTabs.map(tab => (
-                    <button
-                        key={tab.id}
-                        onClick={() => { setView(tab.id as AdminView); setSidebarOpen(false); }}
-                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${view === tab.id ? 'bg-orange-500 text-white' : 'text-gray-300 hover:bg-gray-800'
-                            }`}
-                    >
-                        {tab.icon}
-                        {tab.label}
-                    </button>
-                ))}
-            </nav>
-            <div className="absolute bottom-4 left-4 right-4">
-                <button className="w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg">
-                    <LogOut size={18} />
-                    Çıkış Yap
-                </button>
-            </div>
-        </aside>
-    );
 
     const renderDashboard = () => (
         <div className="space-y-6">
@@ -306,7 +316,13 @@ export default function AdminWireframe() {
 
     return (
         <div className="min-h-screen bg-gray-100">
-            {renderSidebar()}
+            <Sidebar
+                sidebarOpen={sidebarOpen}
+                view={view}
+                menuTabs={menuTabs}
+                onViewChange={setView}
+                onClose={() => setSidebarOpen(false)}
+            />
 
             {/* Mobile overlay */}
             {sidebarOpen && (

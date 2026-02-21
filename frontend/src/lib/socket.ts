@@ -1,7 +1,7 @@
 'use client';
 
 import { io, Socket } from 'socket.io-client';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useSyncExternalStore } from 'react';
 import { useAuthStore } from '@/stores/authStore';
 
 const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001';
@@ -143,15 +143,15 @@ class SocketService {
 export const socketService = new SocketService();
 
 // React hook for socket access with connection status
+// Uses useSyncExternalStore to avoid synchronous setState in useEffect
 export function useSocket(): Socket | null {
-    const [socketInstance, setSocketInstance] = useState<Socket | null>(null);
     const { restaurant, isAuthenticated } = useAuthStore();
 
+    // Manage connection lifecycle
     useEffect(() => {
         if (isAuthenticated && restaurant?.id) {
-            const s = socketService.connect();
+            socketService.connect();
             socketService.joinRestaurant(restaurant.id);
-            setSocketInstance(s);
 
             return () => {
                 socketService.leaveRestaurant(restaurant.id);
@@ -159,7 +159,20 @@ export function useSocket(): Socket | null {
         }
     }, [isAuthenticated, restaurant?.id]);
 
-    return socketInstance;
+    // Subscribe to socket status changes and read current socket reference
+    const subscribe = useCallback((callback: () => void) => {
+        return socketService.onStatusChange(callback);
+    }, []);
+
+    const getSnapshot = useCallback((): Socket | null => {
+        return socket;
+    }, []);
+
+    const getServerSnapshot = useCallback((): Socket | null => {
+        return null;
+    }, []);
+
+    return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
 // Hook for connection status
