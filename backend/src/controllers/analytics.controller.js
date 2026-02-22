@@ -141,8 +141,8 @@ exports.getTopItems = async (req, res, next) => {
         const limit = Math.max(1, Math.min(20, parseInt(req.query.limit) || 5));
         const restaurantId = req.restaurantId;
 
-        const topItems = await prisma.orderItem.groupBy({
-            by: ['itemName'],
+        // groupBy yerine findMany kullanıp JS tarafında gruplama (Prisma ilişkisel where kısıtlamasını aşmak için)
+        const items = await prisma.orderItem.findMany({
             where: {
                 order: {
                     restaurantId,
@@ -150,24 +150,38 @@ exports.getTopItems = async (req, res, next) => {
                     status: { not: 'cancelled' }
                 }
             },
-            _sum: {
+            select: {
+                itemName: true,
                 quantity: true,
                 subtotal: true
-            },
-            orderBy: {
-                _sum: { quantity: 'desc' }
-            },
-            take: limit
+            }
         });
 
-        res.json({
-            topItems: topItems.map((item, index) => ({
-                rank: index + 1,
-                name: item.itemName,
-                totalQuantity: item._sum.quantity || 0,
-                totalRevenue: Number(item._sum.subtotal || 0)
+        // JavaScript tarafında gruplama
+        const itemMap = {};
+        for (const item of items) {
+            if (!itemMap[item.itemName]) {
+                itemMap[item.itemName] = { quantity: 0, subtotal: 0 };
+            }
+            itemMap[item.itemName].quantity += item.quantity;
+            itemMap[item.itemName].subtotal += Number(item.subtotal);
+        }
+
+        // Array'e çevir, sırala ve limit uygula
+        const topItems = Object.entries(itemMap)
+            .map(([name, stats]) => ({
+                name,
+                totalQuantity: stats.quantity,
+                totalRevenue: Math.round(stats.subtotal * 100) / 100
             }))
-        });
+            .sort((a, b) => b.totalQuantity - a.totalQuantity)
+            .slice(0, limit)
+            .map((item, index) => ({
+                rank: index + 1,
+                ...item
+            }));
+
+        res.json({ topItems });
     } catch (error) {
         next(error);
     }

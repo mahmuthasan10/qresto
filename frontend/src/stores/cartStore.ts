@@ -116,47 +116,27 @@ export const useCartStore = create<CartState>()(
                 const state = get();
                 const currentQr = state.tableQrCode;
 
-                // Case 1: Different QR → full reset for the new table
+                // 1. QR kodlar farklıysa kesin temizlik
                 if (currentQr && currentQr !== qrCode) {
-                    set({
-                        items: [],
-                        sessionToken: null,
-                        tableNumber: null,
-                        tableQrCode: qrCode,
-                        restaurantName: null,
-                        expiresAt: null,
-                    });
-                    return true; // cleared
+                    get().clearSession(); // Tüm sepeti ve session'ı uçurur
+                    set({ tableQrCode: qrCode }); // Yeni QR'ı kaydet
+                    return true;
                 }
 
-                // Case 2: No stored QR (first visit or cleared storage)
-                // If there are stale items from a previous persist, wipe them
+                // 2. İlk defa giriliyorsa
                 if (!currentQr) {
-                    set({
-                        items: [],
-                        sessionToken: null,
-                        tableNumber: null,
-                        tableQrCode: qrCode,
-                        restaurantName: null,
-                        expiresAt: null,
-                    });
-                    return true; // cleared
+                    set({ tableQrCode: qrCode });
+                    return false;
                 }
 
-                // Case 3: Same QR → only clear if session expired
-                const expiresAt = state.expiresAt;
-                if (expiresAt && new Date(expiresAt).getTime() < Date.now()) {
-                    set({
-                        items: [],
-                        sessionToken: null,
-                        tableNumber: null,
-                        restaurantName: null,
-                        expiresAt: null,
-                    });
-                    return true; // cleared
+                // 3. Aynı QR ama oturum süresi dolmuşsa
+                if (state.expiresAt && new Date(state.expiresAt).getTime() < Date.now()) {
+                    get().clearSession();
+                    set({ tableQrCode: qrCode });
+                    return true;
                 }
 
-                return false; // not cleared, same valid session
+                return false;
             },
 
             getTotalAmount: () => {

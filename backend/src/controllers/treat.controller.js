@@ -140,20 +140,21 @@ const TreatController = {
                             sessionId: activeSession ? activeSession.id : null,
                             tableNumber: String(treat.toTable.tableNumber),
                             orderNumber: orderNumber,
-                            status: 'confirmed',
+                            status: 'pending', // Mutfağa düşmesi için 'pending' olmalı
                             totalAmount: 0,
                             paymentMethod: 'cash',
                             customerNotes: `🎁 İKRAM - Masa ${treat.fromTable.tableNumber} tarafından ikram! ${treat.note ? `Not: ${treat.note}` : ''}`,
-                            confirmedAt: new Date(),
                             orderItems: {
-                                create: {
-                                    menuItemId: treat.menuItemId,
-                                    itemName: treat.menuItem.name,
-                                    quantity: 1,
-                                    unitPrice: 0,
-                                    subtotal: 0,
-                                    notes: treat.note || null
-                                }
+                                create: [
+                                    {
+                                        menuItemId: treat.menuItemId,
+                                        itemName: treat.menuItem.name,
+                                        quantity: 1,
+                                        unitPrice: 0,
+                                        subtotal: 0,
+                                        notes: treat.note || null
+                                    }
+                                ]
                             }
                         },
                         include: {

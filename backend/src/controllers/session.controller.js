@@ -21,7 +21,7 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
 
 exports.start = async (req, res, next) => {
     try {
-        const { qrCode, latitude, longitude, deviceInfo } = req.body;
+        const { qrCode, latitude, longitude, accuracy, deviceInfo } = req.body;
 
         if (!qrCode) {
             return res.status(400).json({ error: 'QR kod gerekli' });
@@ -73,14 +73,20 @@ exports.start = async (req, res, next) => {
                 parseFloat(table.restaurant.longitude)
             );
 
-            locationVerified = distance <= table.restaurant.locationRadius;
+            // accuracy cihazdan gelir, yoksa minimum 50 metre tolerans ver
+            // Restoranın kendi yarıçapına +50 metre "kapalı alan sapma payı" ekle
+            const accuracyTolerance = Math.min(Number(accuracy) || 50, 500);
+            const baseRadius = Number(table.restaurant.locationRadius) || 50;
+            const effectiveRadius = baseRadius + accuracyTolerance + 50;
+
+            locationVerified = distance <= effectiveRadius;
 
             // In development, allow bypass if location fails
             if (!locationVerified && !isDev) {
                 return res.status(403).json({
-                    error: 'Bu QR kod sadece restoran içinde kullanılabilir',
+                    error: `Restoran alanından uzaktasınız. (Mesafe: ${Math.round(distance)}m, İzin Verilen: ${Math.round(effectiveRadius)}m)`,
                     distance: Math.round(distance),
-                    maxDistance: table.restaurant.locationRadius
+                    maxDistance: Math.round(effectiveRadius)
                 });
             }
 

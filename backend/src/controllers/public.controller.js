@@ -175,12 +175,16 @@ exports.createOrder = async (req, res, next) => {
                 parseFloat(session.restaurant.longitude)
             );
 
-            // GPS accuracy (metres) acts as tolerance on top of the restaurant radius
-            const accuracyTolerance = Math.min(value.accuracy || 0, 500);
-            const effectiveRadius = session.restaurant.locationRadius + accuracyTolerance;
+            // accuracy cihazdan gelir, yoksa minimum 50 metre tolerans ver
+            // Restoranın kendi yarıçapına +50 metre "kapalı alan sapma payı" ekle
+            const accuracyTolerance = Math.min(Number(value.accuracy) || 50, 500);
+            const baseRadius = Number(session.restaurant.locationRadius) || 50;
+            const effectiveRadius = baseRadius + accuracyTolerance + 50;
 
             if (distance > effectiveRadius) {
-                return res.status(403).json({ error: 'Sipariş vermek için restoranda olmalısınız' });
+                return res.status(403).json({
+                    error: `Restoran alanından uzaktasınız. (Mesafe: ${Math.round(distance)}m, İzin Verilen: ${Math.round(effectiveRadius)}m)`
+                });
             }
         }
 
@@ -353,15 +357,17 @@ exports.verifyLocation = async (req, res, next) => {
             parseFloat(table.restaurant.longitude)
         );
 
-        // GPS accuracy (metres) as tolerance – capped at 500 m to prevent abuse
-        const accuracyTolerance = Math.min(Number(accuracy) || 0, 500);
-        const effectiveRadius = table.restaurant.locationRadius + accuracyTolerance;
+        // accuracy cihazdan gelir, yoksa minimum 50 metre tolerans ver
+        // Restoranın kendi yarıçapına +50 metre "kapalı alan sapma payı" ekle
+        const accuracyTolerance = Math.min(Number(accuracy) || 50, 500);
+        const baseRadius = Number(table.restaurant.locationRadius) || 50;
+        const effectiveRadius = baseRadius + accuracyTolerance + 50;
         const isValid = distance <= effectiveRadius;
 
         res.json({
             valid: isValid,
             distance: Math.round(distance),
-            maxDistance: effectiveRadius
+            maxDistance: Math.round(effectiveRadius)
         });
     } catch (error) {
         next(error);
