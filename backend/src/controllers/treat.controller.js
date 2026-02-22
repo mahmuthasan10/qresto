@@ -121,14 +121,28 @@ const TreatController = {
                     // Generate a unique order number (simple timestamp based for now)
                     const orderNumber = `TRT-${Date.now().toString().slice(-6)}`;
 
+                    // Find an active session for the destination table so the
+                    // Order can be linked properly (sessionId is optional but
+                    // avoids FK issues when a session-based lookup is attempted).
+                    const activeSession = await prisma.session.findFirst({
+                        where: {
+                            tableId: treat.toTableId,
+                            isActive: true,
+                            expiresAt: { gt: new Date() }
+                        },
+                        orderBy: { startedAt: 'desc' }
+                    });
+
                     const newOrder = await prisma.order.create({
                         data: {
                             restaurantId: treat.toTable.restaurantId,
                             tableId: treat.toTableId,
-                            tableNumber: treat.toTable.tableNumber,
+                            sessionId: activeSession ? activeSession.id : null,
+                            tableNumber: String(treat.toTable.tableNumber),
                             orderNumber: orderNumber,
                             status: 'confirmed',
                             totalAmount: 0,
+                            paymentMethod: 'cash',
                             customerNotes: `🎁 İKRAM - Masa ${treat.fromTable.tableNumber} tarafından ikram! ${treat.note ? `Not: ${treat.note}` : ''}`,
                             confirmedAt: new Date(),
                             orderItems: {
@@ -137,19 +151,44 @@ const TreatController = {
                                     itemName: treat.menuItem.name,
                                     quantity: 1,
                                     unitPrice: 0,
-                                    subtotal: 0
+                                    subtotal: 0,
+                                    notes: treat.note || null
                                 }
                             }
                         },
                         include: {
-                            orderItems: true,
-                            table: { select: { tableNumber: true, tableName: true } }
+                            orderItems: true
                         }
                     });
 
-                    // Notify Kitchen via Socket
+                    // Emit with the exact same shape the kitchen / admin panels expect
                     if (io) {
-                        io.to(`restaurant_${treat.toTable.restaurantId}`).emit('new_order', newOrder);
+                        const restaurantRoom = `restaurant_${treat.toTable.restaurantId}`;
+                        io.to(restaurantRoom).emit('new_order', {
+                            id: newOrder.id,
+                            orderNumber: newOrder.orderNumber,
+                            tableId: newOrder.tableId,
+                            tableNumber: newOrder.tableNumber,
+                            status: newOrder.status,
+                            totalAmount: newOrder.totalAmount,
+                            paymentMethod: newOrder.paymentMethod,
+                            customerNotes: newOrder.customerNotes,
+                            createdAt: newOrder.createdAt,
+                            confirmedAt: newOrder.confirmedAt,
+                            preparingAt: newOrder.preparingAt,
+                            readyAt: newOrder.readyAt,
+                            completedAt: newOrder.completedAt,
+                            cancelledAt: newOrder.cancelledAt,
+                            cancellationReason: newOrder.cancellationReason,
+                            orderItems: newOrder.orderItems.map(item => ({
+                                id: item.id,
+                                itemName: item.itemName,
+                                quantity: item.quantity,
+                                unitPrice: item.unitPrice,
+                                subtotal: item.subtotal,
+                                notes: item.notes || undefined,
+                            })),
+                        });
                         logger.info(`Treat approved, created order #${newOrder.orderNumber}`);
                     }
                 } catch (err) {

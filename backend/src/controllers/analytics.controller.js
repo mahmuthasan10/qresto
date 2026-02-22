@@ -80,34 +80,37 @@ exports.getSummary = async (req, res, next) => {
 /**
  * GET /api/v1/analytics/daily?period=7
  * Günlük sipariş ve gelir trendi
+ * PostgreSQL-specific $queryRaw yerine Prisma findMany + JS gruplama
  */
 exports.getDailyTrend = async (req, res, next) => {
     try {
         const { startDate, days } = getDateRange(req.query.period);
         const restaurantId = req.restaurantId;
 
-        // Tek sorguda tüm günleri getir (N+1 yerine 1 sorgu)
-        const orders = await prisma.$queryRaw`
-            SELECT
-                DATE(created_at) as date,
-                COUNT(*)::int as orders,
-                COALESCE(SUM(CASE WHEN status != 'cancelled' THEN total_amount ELSE 0 END), 0)::float as revenue
-            FROM orders
-            WHERE restaurant_id = ${restaurantId}
-              AND created_at >= ${startDate}
-            GROUP BY DATE(created_at)
-            ORDER BY date ASC
-        `;
+        // Tek sorguda dönem içindeki tüm siparişleri çek (sadece gereken alanlar)
+        const orders = await prisma.order.findMany({
+            where: {
+                restaurantId,
+                createdAt: { gte: startDate }
+            },
+            select: {
+                createdAt: true,
+                status: true,
+                totalAmount: true
+            }
+        });
 
-        // Tüm günleri kapsayan map oluştur
+        // JavaScript tarafında gün bazlı grupla
         const orderMap = {};
-        for (const row of orders) {
-            const dateStr = new Date(row.date).toISOString().split('T')[0];
-            orderMap[dateStr] = {
-                date: dateStr,
-                orders: Number(row.orders),
-                revenue: Number(row.revenue)
-            };
+        for (const order of orders) {
+            const dateStr = order.createdAt.toISOString().split('T')[0];
+            if (!orderMap[dateStr]) {
+                orderMap[dateStr] = { date: dateStr, orders: 0, revenue: 0 };
+            }
+            orderMap[dateStr].orders += 1;
+            if (order.status !== 'cancelled') {
+                orderMap[dateStr].revenue += Number(order.totalAmount);
+            }
         }
 
         // Boş günleri de dahil et
@@ -116,7 +119,10 @@ exports.getDailyTrend = async (req, res, next) => {
             const date = new Date(startDate);
             date.setDate(date.getDate() + i);
             const dateStr = date.toISOString().split('T')[0];
-            results.push(orderMap[dateStr] || { date: dateStr, orders: 0, revenue: 0 });
+            const entry = orderMap[dateStr] || { date: dateStr, orders: 0, revenue: 0 };
+            // Geliri iki ondalığa yuvarla
+            entry.revenue = Math.round(entry.revenue * 100) / 100;
+            results.push(entry);
         }
 
         res.json({ dailyTrend: results });

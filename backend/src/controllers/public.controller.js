@@ -46,7 +46,8 @@ const createOrderSchema = Joi.object({
     paymentMethod: Joi.string().valid('cash', 'card_at_table').required(),
     customerNotes: Joi.string().max(1000).optional().allow(''),
     latitude: Joi.number().optional(),
-    longitude: Joi.number().optional()
+    longitude: Joi.number().optional(),
+    accuracy: Joi.number().min(0).max(1000).optional()
 });
 
 exports.getMenuByQR = async (req, res, next) => {
@@ -174,7 +175,11 @@ exports.createOrder = async (req, res, next) => {
                 parseFloat(session.restaurant.longitude)
             );
 
-            if (distance > session.restaurant.locationRadius) {
+            // GPS accuracy (metres) acts as tolerance on top of the restaurant radius
+            const accuracyTolerance = Math.min(value.accuracy || 0, 500);
+            const effectiveRadius = session.restaurant.locationRadius + accuracyTolerance;
+
+            if (distance > effectiveRadius) {
                 return res.status(403).json({ error: 'Sipariş vermek için restoranda olmalısınız' });
             }
         }
@@ -322,7 +327,7 @@ exports.getOrderStatus = async (req, res, next) => {
 
 exports.verifyLocation = async (req, res, next) => {
     try {
-        const { qrCode, latitude, longitude } = req.body;
+        const { qrCode, latitude, longitude, accuracy } = req.body;
 
         if (!qrCode || !latitude || !longitude) {
             return res.status(400).json({ error: 'QR kod ve konum bilgisi gerekli' });
@@ -348,12 +353,15 @@ exports.verifyLocation = async (req, res, next) => {
             parseFloat(table.restaurant.longitude)
         );
 
-        const isValid = distance <= table.restaurant.locationRadius;
+        // GPS accuracy (metres) as tolerance – capped at 500 m to prevent abuse
+        const accuracyTolerance = Math.min(Number(accuracy) || 0, 500);
+        const effectiveRadius = table.restaurant.locationRadius + accuracyTolerance;
+        const isValid = distance <= effectiveRadius;
 
         res.json({
             valid: isValid,
             distance: Math.round(distance),
-            maxDistance: table.restaurant.locationRadius
+            maxDistance: effectiveRadius
         });
     } catch (error) {
         next(error);

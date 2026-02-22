@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { publicApi } from '@/lib/api';
-import { useCartStore } from '@/stores/cartStore';
+import { useCartStore, useCartHydrated } from '@/stores/cartStore';
 import { Button, Card, CardBody, Modal } from '@/components/ui';
 import SessionTimer from '@/components/SessionTimer';
 import { TableSelectionModal } from '@/components/Treats/TableSelectionModal';
@@ -62,6 +62,7 @@ export default function MenuPage() {
     const params = useParams();
     const router = useRouter();
     const tableQR = params.qrCode as string;
+    const prevQrRef = useRef<string | null>(null);
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -114,6 +115,8 @@ export default function MenuPage() {
         ensureTable,
     } = useCartStore();
 
+    const hydrated = useCartHydrated();
+
     // Fetch menu data
     const fetchMenu = useCallback(async () => {
         try {
@@ -136,13 +139,35 @@ export default function MenuPage() {
         }
     }, [tableQR]);
 
+    // Primary effect: reset cart & session whenever the QR code changes.
+    // Waits for Zustand hydration so we read the real persisted tableQrCode
+    // before deciding whether a reset is needed.
     useEffect(() => {
-        if (tableQR) {
-            // Farklı masa QR'ı ile girilmişse sepeti temizle
-            ensureTable(tableQR);
-            fetchMenu();
+        if (!hydrated || !tableQR) return;
+
+        // ensureTable compares the incoming qrCode against the persisted one
+        // and clears cart + session when they differ (or when session is expired).
+        ensureTable(tableQR);
+    }, [tableQR, hydrated, ensureTable]);
+
+    // Fetch menu whenever the QR code changes (independent of cart logic).
+    useEffect(() => {
+        if (!tableQR) return;
+
+        // Reset local page state for the new table
+        if (prevQrRef.current !== null && prevQrRef.current !== tableQR) {
+            setError(null);
+            setSelectedItem(null);
+            setSearchQuery('');
+            setActiveCategory(null);
+            setIsTreatMode(false);
+            setTargetTableId(null);
+            setTargetTableNumber(null);
         }
-    }, [tableQR, fetchMenu, ensureTable]);
+
+        prevQrRef.current = tableQR;
+        fetchMenu();
+    }, [tableQR, fetchMenu]);
 
     // Not: QR ile menüye ilk girişte direkt menü görünsün.
     // Lokasyon/onay modalını sadece siparişe başlarken göstereceğiz.
@@ -164,13 +189,14 @@ export default function MenuPage() {
                 });
             });
 
-            const { latitude, longitude } = position.coords;
+            const { latitude, longitude, accuracy } = position.coords;
 
             // Start session via API
             const response = await publicApi.post('/sessions/start', {
                 qrCode: tableQR,
                 latitude,
                 longitude,
+                accuracy: accuracy ?? undefined,
                 deviceInfo: {
                     userAgent: navigator.userAgent,
                     language: navigator.language
@@ -391,7 +417,7 @@ export default function MenuPage() {
                                     <Globe className="w-3.5 h-3.5" />
                                     {lang === 'tr' ? 'EN' : 'TR'}
                                 </button>
-                                {sessionToken && (
+                                {hydrated && sessionToken && (
                                     <SessionTimer onExpire={() => router.push('/')} />
                                 )}
                             </div>
@@ -651,7 +677,7 @@ export default function MenuPage() {
                 </section>
 
                 {/* Fixed Bottom Cart Bar (Hide in Treat Mode) */}
-                {!isTreatMode && totalItems > 0 && (
+                {hydrated && !isTreatMode && totalItems > 0 && (
                     <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg p-4 z-50">
                         <button
                             onClick={() => router.push('/cart')}

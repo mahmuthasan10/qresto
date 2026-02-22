@@ -68,29 +68,45 @@ export default function AnalyticsPage() {
     const [isLoading, setIsLoading] = useState(true);
 
     const fetchAnalytics = useCallback(async () => {
+        const endpoints = [
+            { label: 'summary',   url: `/analytics/summary?period=${period}` },
+            { label: 'daily',     url: `/analytics/daily?period=${period}` },
+            { label: 'top-items', url: `/analytics/top-items?period=${period}&limit=5` },
+            { label: 'status',    url: `/analytics/status-distribution?period=${period}` },
+        ];
+
         try {
             setIsLoading(true);
-            const results = await Promise.allSettled([
-                api.get(`/analytics/summary?period=${period}`),
-                api.get(`/analytics/daily?period=${period}`),
-                api.get(`/analytics/top-items?period=${period}&limit=5`),
-                api.get(`/analytics/status-distribution?period=${period}`)
-            ]);
+            const results = await Promise.allSettled(
+                endpoints.map(ep => api.get(ep.url))
+            );
 
             if (results[0].status === 'fulfilled') setSummary(results[0].value.data.summary);
             if (results[1].status === 'fulfilled') setDailyTrend(results[1].value.data.dailyTrend);
             if (results[2].status === 'fulfilled') setTopItems(results[2].value.data.topItems);
             if (results[3].status === 'fulfilled') setStatusDist(results[3].value.data.statusDistribution);
 
-            const failedCount = results.filter(r => r.status === 'rejected').length;
-            if (failedCount > 0) {
-                console.error('Analytics fetch errors:', results.filter(r => r.status === 'rejected'));
-                if (failedCount === results.length) {
+            // Detaylı hata logları: hangi endpoint, hangi URL, HTTP kodu ve mesaj
+            const failures = results
+                .map((r, i) => ({ result: r, ...endpoints[i] }))
+                .filter(r => r.result.status === 'rejected');
+
+            if (failures.length > 0) {
+                failures.forEach(({ label, url, result }) => {
+                    const reason = (result as PromiseRejectedResult).reason;
+                    const status = reason?.response?.status ?? 'N/A';
+                    const serverMsg = reason?.response?.data?.error ?? reason?.message ?? 'Unknown';
+                    console.error(
+                        `[Analytics] "${label}" FAILED | URL: ${url} | HTTP ${status} | ${serverMsg}`
+                    );
+                });
+                if (failures.length === results.length) {
                     toast.error('Analitik verileri yüklenirken hata oluştu');
                 }
             }
-        } catch (error) {
-            console.error('Analytics fetch error:', error);
+        } catch (error: unknown) {
+            const err = error as { message?: string };
+            console.error('[Analytics] Unexpected error during fetch:', err?.message ?? error);
             toast.error('Analitik verileri yüklenirken hata oluştu');
         } finally {
             setIsLoading(false);

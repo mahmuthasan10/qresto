@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useCartStore } from '@/stores/cartStore';
@@ -19,13 +19,20 @@ export default function CartPage() {
         removeItem,
         clearCart,
         getTotalAmount,
+        _hasHydrated,
     } = useCartStore();
 
     const [orderNote, setOrderNote] = useState('');
     const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card_at_table'>('cash');
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [showNoSessionModal, setShowNoSessionModal] = useState(!sessionToken);
+    const [showNoSessionModal, setShowNoSessionModal] = useState(false);
+
+    useEffect(() => {
+        if (_hasHydrated && !sessionToken) {
+            setShowNoSessionModal(true);
+        }
+    }, [_hasHydrated, sessionToken]);
 
     const totalAmount = getTotalAmount();
 
@@ -43,6 +50,8 @@ export default function CartPage() {
             let latitude: number | undefined;
             let longitude: number | undefined;
 
+            let accuracy: number | undefined;
+
             try {
                 const position = await new Promise<GeolocationPosition>((resolve, reject) => {
                     navigator.geolocation.getCurrentPosition(resolve, reject, {
@@ -52,6 +61,7 @@ export default function CartPage() {
                 });
                 latitude = position.coords.latitude;
                 longitude = position.coords.longitude;
+                accuracy = position.coords.accuracy;
             } catch {
                 // Continue without location
             }
@@ -67,6 +77,7 @@ export default function CartPage() {
                 customerNotes: orderNote,
                 latitude,
                 longitude,
+                accuracy,
             });
 
             const { order } = response.data;
@@ -78,6 +89,15 @@ export default function CartPage() {
             setSubmitting(false);
         }
     };
+
+    // Hydration bekleniyor
+    if (!_hasHydrated) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
+            </div>
+        );
+    }
 
     // Empty cart
     if (items.length === 0) {
