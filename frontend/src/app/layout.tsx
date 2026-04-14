@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { Toaster } from "react-hot-toast";
+import CartTabSyncProvider from "@/components/providers/CartTabSyncProvider";
 import "./globals.css";
 
 const inter = Inter({
@@ -54,6 +55,7 @@ export default function RootLayout({
             },
           }}
         />
+        <CartTabSyncProvider />
         {children}
 
         {/* Service Worker Registration */}

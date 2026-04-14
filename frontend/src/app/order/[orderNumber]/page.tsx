@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { publicApi } from '@/lib/api';
 import { socketService } from '@/lib/socket';
@@ -59,16 +59,38 @@ export default function OrderTrackingPage() {
     const [order, setOrder] = useState<Order | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [socketConnected, setSocketConnected] = useState(false);
+    const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-    const fetchOrder = async () => {
+    const fetchOrder = async (showLoader = true) => {
         try {
-            setLoading(true);
+            if (showLoader) setLoading(true);
             const response = await publicApi.get(`/public/orders/${orderNumber}`);
-            setOrder(response.data.order);
-        } catch (err: any) {
-            setError(err.response?.data?.error || 'Sipariş bulunamadı');
+            const fetched: Order = response.data.order;
+            setOrder(fetched);
+            // Tamamlandı veya iptal edildiyse polling'i durdur
+            if (fetched.status === 'completed' || fetched.status === 'cancelled') {
+                stopPolling();
+            }
+        } catch (err: unknown) {
+            const axiosErr = err as { response?: { data?: { error?: string } } };
+            if (showLoader) setError(axiosErr.response?.data?.error || 'Sipariş bulunamadı');
         } finally {
-            setLoading(false);
+            if (showLoader) setLoading(false);
+        }
+    };
+
+    const startPolling = () => {
+        if (pollingRef.current) return; // Zaten çalışıyor
+        pollingRef.current = setInterval(() => {
+            fetchOrder(false); // Loader göstermeden arka planda güncelle
+        }, 15_000);
+    };
+
+    const stopPolling = () => {
+        if (pollingRef.current) {
+            clearInterval(pollingRef.current);
+            pollingRef.current = null;
         }
     };
 
@@ -78,18 +100,49 @@ export default function OrderTrackingPage() {
         }
     }, [orderNumber]);
 
-    // WebSocket for real-time updates
+    // WebSocket for real-time updates + polling fallback
     useEffect(() => {
-        socketService.connect();
+        const socket = socketService.connect();
+
+        const handleConnect = () => {
+            setSocketConnected(true);
+            stopPolling(); // Socket bağlandıysa polling'e gerek yok
+        };
+
+        const handleDisconnect = () => {
+            setSocketConnected(false);
+            startPolling(); // Socket kopunca polling başlat
+        };
+
+        // Socket.io olaylarını dinle
+        socket.on('connect', handleConnect);
+        socket.on('disconnect', handleDisconnect);
+
+        // Bağlantı durumuna göre başlangıç ayarı
+        if (socket.connected) {
+            setSocketConnected(true);
+        } else {
+            startPolling(); // Bağlanamadıysa hemen polling başlat
+        }
 
         socketService.onOrderStatusUpdated((data) => {
             if (data.orderNumber === orderNumber) {
-                setOrder((prev) => prev ? { ...prev, status: data.status } : prev);
+                setOrder((prev) => {
+                    if (!prev) return prev;
+                    const updated = { ...prev, status: data.status };
+                    if (data.status === 'completed' || data.status === 'cancelled') {
+                        stopPolling();
+                    }
+                    return updated;
+                });
             }
         });
 
         return () => {
+            socket.off('connect', handleConnect);
+            socket.off('disconnect', handleDisconnect);
             socketService.removeAllListeners();
+            stopPolling();
         };
     }, [orderNumber]);
 
@@ -164,9 +217,16 @@ export default function OrderTrackingPage() {
                             <p className="text-sm text-gray-500">{order.orderNumber}</p>
                         </div>
                     </div>
-                    <button onClick={fetchOrder} className="p-2 hover:bg-gray-100 rounded-full">
-                        <RefreshCw className="w-5 h-5 text-gray-600" />
-                    </button>
+                    <div className="flex items-center gap-2">
+                        {/* Bağlantı durumu göstergesi */}
+                        <div
+                            title={socketConnected ? 'Canlı bağlantı aktif' : 'Polling ile takip ediliyor (15sn)'}
+                            className={`w-2 h-2 rounded-full ${socketConnected ? 'bg-green-500' : 'bg-yellow-400 animate-pulse'}`}
+                        />
+                        <button onClick={() => fetchOrder()} className="p-2 hover:bg-gray-100 rounded-full">
+                            <RefreshCw className="w-5 h-5 text-gray-600" />
+                        </button>
+                    </div>
                 </div>
             </header>
 

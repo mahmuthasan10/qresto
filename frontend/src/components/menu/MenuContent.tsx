@@ -260,7 +260,7 @@ export function MenuContent({
                 <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg p-4 z-50">
                     <button
                         onClick={onCartClick}
-                        className="w-full bg-orange-500 text-white py-4 rounded-xl flex items-center justify-between px-6 hover:bg-orange-600 transition-colors"
+                        className="w-full bg-orange-500 text-white py-4 rounded-xl flex items-center justify-between px-6 hover:bg-orange-600 transition-colors active:scale-[0.98]"
                     >
                         <div className="flex items-center gap-3">
                             <div className="relative">
@@ -269,7 +269,7 @@ export function MenuContent({
                                     {totalItems}
                                 </span>
                             </div>
-                            <span className="font-medium">{lang === 'tr' ? 'Sepeti Görüntüle' : 'View Cart'}</span>
+                            <span className="font-medium">{lang === 'tr' ? 'Siparişi Tamamla' : 'Checkout'}</span>
                         </div>
                         <span className="font-bold text-lg">₺{totalAmount.toFixed(2)}</span>
                     </button>

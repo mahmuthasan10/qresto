@@ -13,6 +13,7 @@ import { MenuHeader } from '@/components/menu/MenuHeader';
 import { MenuItemModal } from '@/components/menu/MenuItemModal';
 import { LocationModal } from '@/components/menu/LocationModal';
 import { MenuContent } from '@/components/menu/MenuContent';
+import { InlineCheckoutSheet } from '@/components/menu/InlineCheckoutSheet';
 import type { MenuItem, Lang } from '@/components/menu/types';
 
 export default function MenuPage() {
@@ -56,13 +57,22 @@ export default function MenuPage() {
     const [sendingTreat, setSendingTreat] = useState(false);
     const [treatSuccessModal, setTreatSuccessModal] = useState(false);
 
+    // ─── Inline Checkout ─────────────────────────────────────────────────────
+    const [showCheckoutSheet, setShowCheckoutSheet] = useState(false);
+
     // ─── Session State ───────────────────────────────────────────────────────
     const [showLocationModal, setShowLocationModal] = useState(false);
     const [locationError, setLocationError] = useState<string | null>(null);
     const [sessionStarting, setSessionStarting] = useState(false);
 
-    const { addItem, getTotalItems, getTotalAmount, sessionToken, setSession, ensureTable } =
-        useCartStore();
+    // Granular selector'lar — tüm store'a subscribe olmak yerine sadece ilgili
+    // slice'lara subscribe olarak gereksiz re-render'ları önlüyoruz.
+    const addItem      = useCartStore((s) => s.addItem);
+    const setSession   = useCartStore((s) => s.setSession);
+    const ensureTable  = useCartStore((s) => s.ensureTable);
+    const sessionToken = useCartStore((s) => s.sessionToken);
+    const getTotalItems   = useCartStore((s) => s.getTotalItems);
+    const getTotalAmount  = useCartStore((s) => s.getTotalAmount);
     const hydrated = useCartHydrated();
 
     // ─── QR değişiminde sepet/kategori sıfırlama ────────────────────────────
@@ -274,7 +284,7 @@ export default function MenuPage() {
                     onItemSelect={setSelectedItem}
                     onQuickAdd={(item) => handleAddToCart(item)}
                     onSearchChange={setSearchQuery}
-                    onCartClick={() => router.push('/cart')}
+                    onCartClick={() => setShowCheckoutSheet(true)}
                 />
 
                 <MenuItemModal
@@ -305,6 +315,12 @@ export default function MenuPage() {
                     onSelect={handleTableSelect}
                     currentTableId={table?.id}
                     restaurantId={restaurant?.id}
+                />
+
+                <InlineCheckoutSheet
+                    isOpen={showCheckoutSheet}
+                    lang={lang}
+                    onClose={() => setShowCheckoutSheet(false)}
                 />
 
                 {/* Treat başarı modalı */}

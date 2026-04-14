@@ -191,3 +191,57 @@ export function useCartHydrated(): boolean {
     // Subscribe to _hasHydrated directly — avoids an extra re-render cycle
     return useCartStore((s) => s._hasHydrated);
 }
+
+/**
+ * BroadcastChannel ile aynı tarayıcıdaki tüm tab'lar arasında sepet senkronizasyonu.
+ * Bir tab'da yapılan değişiklik diğer tab'lara anında yansır.
+ * useEffect ile sadece client-side'da çağırılmalıdır.
+ */
+const CART_SYNC_CHANNEL = 'qresto-cart-sync';
+
+export function initCartTabSync(): () => void {
+    if (typeof window === 'undefined' || !('BroadcastChannel' in window)) {
+        return () => {};
+    }
+
+    const channel = new BroadcastChannel(CART_SYNC_CHANNEL);
+
+    // Diğer tab'lardan gelen güncellemeleri dinle
+    channel.onmessage = (event: MessageEvent) => {
+        const { type, payload } = event.data as {
+            type: string;
+            payload: Partial<CartState>;
+        };
+
+        if (type === 'CART_UPDATED') {
+            useCartStore.setState({
+                items: payload.items ?? [],
+                sessionToken: payload.sessionToken ?? null,
+                tableNumber: payload.tableNumber ?? null,
+                tableQrCode: payload.tableQrCode ?? null,
+                restaurantName: payload.restaurantName ?? null,
+                expiresAt: payload.expiresAt ? new Date(payload.expiresAt) : null,
+            });
+        }
+    };
+
+    // Bu tab'daki değişiklikleri diğer tab'lara yayınla
+    const unsubscribe = useCartStore.subscribe((state) => {
+        channel.postMessage({
+            type: 'CART_UPDATED',
+            payload: {
+                items: state.items,
+                sessionToken: state.sessionToken,
+                tableNumber: state.tableNumber,
+                tableQrCode: state.tableQrCode,
+                restaurantName: state.restaurantName,
+                expiresAt: state.expiresAt,
+            },
+        });
+    });
+
+    return () => {
+        unsubscribe();
+        channel.close();
+    };
+}

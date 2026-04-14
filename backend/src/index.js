@@ -23,6 +23,7 @@ const analyticsRoutes = require('./routes/analytics.routes');
 
 // Import middleware
 const errorHandler = require('./middleware/errorHandler');
+const autoExtendSession = require('./middlewares/autoExtendSession');
 const prisma = require('./config/database');
 const { logger } = require('./utils/logger');
 
@@ -142,7 +143,7 @@ app.use('/api/v1/menu-items', menuItemRoutes);
 app.use('/api/v1/tables', tableRoutes);
 app.use('/api/v1/orders', orderRoutes);
 app.use('/api/v1/sessions', sessionRoutes);
-app.use('/api/v1/public', publicRoutes);
+app.use('/api/v1/public', autoExtendSession, publicRoutes);
 app.use('/api/v1/treats', treatRoutes);
 app.use('/api/v1/analytics', analyticsRoutes);
 

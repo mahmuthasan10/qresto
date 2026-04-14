@@ -58,7 +58,7 @@ api.interceptors.response.use(
 
 export default api;
 
-// Public API (no auth)
+// Public API (no auth) — müşteri istekleri için
 export const publicApi = axios.create({
     baseURL: API_URL,
     timeout: 10000,
@@ -66,3 +66,46 @@ export const publicApi = axios.create({
         'Content-Type': 'application/json',
     },
 });
+
+// Request interceptor: cart session token'ı her isteğe ekle
+publicApi.interceptors.request.use(
+    (config) => {
+        try {
+            const cartRaw = localStorage.getItem('cart-storage');
+            if (cartRaw) {
+                const cartData = JSON.parse(cartRaw) as { state?: { sessionToken?: string } };
+                const token = cartData?.state?.sessionToken;
+                if (token) {
+                    config.headers['x-session-token'] = token;
+                }
+            }
+        } catch {
+            // localStorage erişim hatası — sessizce geç
+        }
+        return config;
+    },
+    (error) => Promise.reject(error)
+);
+
+// Response interceptor: backend session uzattıysa localStorage'ı güncelle
+publicApi.interceptors.response.use(
+    (response) => {
+        const newExpiry = response.headers['x-session-expires-at'];
+        if (newExpiry) {
+            try {
+                const cartRaw = localStorage.getItem('cart-storage');
+                if (cartRaw) {
+                    const cartData = JSON.parse(cartRaw) as { state?: { expiresAt?: string } };
+                    if (cartData?.state) {
+                        cartData.state.expiresAt = newExpiry;
+                        localStorage.setItem('cart-storage', JSON.stringify(cartData));
+                    }
+                }
+            } catch {
+                // Güncelleme hatası kritik değil
+            }
+        }
+        return response;
+    },
+    (error) => Promise.reject(error)
+);
