@@ -149,7 +149,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     cancelOrder: async (id, reason) => {
         set({ isLoading: true, error: null });
         try {
-            await api.delete(`/orders/${id}`, { data: { reason } });
+            await api.patch(`/orders/${id}/cancel`, { reason });
 
             set(state => ({
                 orders: state.orders.map(order =>

@@ -1,22 +1,36 @@
 const prisma = require('../config/database');
 const Joi = require('joi');
 const { verifyLocationDistance } = require('../utils/geo');
+const { redisClient } = require('../config/redis');
 
 // Generate order number: ORD-YYYYMMDD-XXX
+// Redis INCR ile atomik sayaç -- race condition olmaz.
+// Redis erişilemezse DB count fallback ile devam eder.
 const generateOrderNumber = async (restaurantId) => {
     const today = new Date();
     const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
+    const redisKey = `qresto:order_counter:${restaurantId}:${dateStr}`;
 
-    const count = await prisma.order.count({
-        where: {
-            restaurantId,
-            createdAt: {
-                gte: new Date(today.setHours(0, 0, 0, 0))
-            }
+    try {
+        // Atomik artırım
+        const counter = await redisClient.incr(redisKey);
+        // İlk oluşturmada TTL ayarla: gece yarısına kadar + 2 saat buffer
+        if (counter === 1) {
+            const now = new Date();
+            const midnight = new Date(now);
+            midnight.setHours(26, 0, 0, 0); // +2 saat buffer
+            const ttl = Math.round((midnight.getTime() - now.getTime()) / 1000);
+            await redisClient.expire(redisKey, ttl);
         }
-    });
-
-    return `ORD-${dateStr}-${String(count + 1).padStart(3, '0')}`;
+        return `ORD-${dateStr}-${String(counter).padStart(3, '0')}`;
+    } catch {
+        // Redis erişilemez: DB count fallback (race condition riski düşük, kısa süreli fallback)
+        const startOfDay = new Date(today.setHours(0, 0, 0, 0));
+        const count = await prisma.order.count({
+            where: { restaurantId, createdAt: { gte: startOfDay } }
+        });
+        return `ORD-${dateStr}-${String(count + 1).padStart(3, '0')}`;
+    }
 };
 
 const orderItemSchema = Joi.object({
@@ -35,10 +49,25 @@ const createOrderSchema = Joi.object({
     accuracy: Joi.number().min(0).max(1000).optional()
 });
 
+const MENU_CACHE_TTL = 5 * 60; // 5 dakika (saniye cinsinden)
+
 exports.getMenuByQR = async (req, res, next) => {
     try {
+        const tableQR = req.params.tableQR;
+        const cacheKey = `qresto:menu:${tableQR}`;
+
+        // Cache'den dene
+        try {
+            const cached = await redisClient.get(cacheKey);
+            if (cached) {
+                return res.json(JSON.parse(cached));
+            }
+        } catch {
+            // Redis erişilemez -- DB'ye devam et
+        }
+
         const table = await prisma.table.findUnique({
-            where: { qrCode: req.params.tableQR },
+            where: { qrCode: tableQR },
             include: {
                 restaurant: {
                     select: {
@@ -64,7 +93,7 @@ exports.getMenuByQR = async (req, res, next) => {
             return res.status(403).json({ error: 'Bu masa aktif değil' });
         }
 
-        // Get categories with menu items
+        // Kategoriler ve menu ögelerini tek sorguda çek
         const categories = await prisma.category.findMany({
             where: {
                 restaurantId: table.restaurant.id,
@@ -79,7 +108,7 @@ exports.getMenuByQR = async (req, res, next) => {
             orderBy: { displayOrder: 'asc' }
         });
 
-        // Get featured items
+        // Featured items
         const featuredItems = await prisma.menuItem.findMany({
             where: {
                 restaurantId: table.restaurant.id,
@@ -89,7 +118,7 @@ exports.getMenuByQR = async (req, res, next) => {
             take: 10
         });
 
-        res.json({
+        const payload = {
             restaurant: table.restaurant,
             table: {
                 id: table.id,
@@ -98,7 +127,16 @@ exports.getMenuByQR = async (req, res, next) => {
             },
             categories,
             featuredItems
-        });
+        };
+
+        // Cache'e yaz (hata olursa sessizce geç)
+        try {
+            await redisClient.set(cacheKey, JSON.stringify(payload), 'EX', MENU_CACHE_TTL);
+        } catch {
+            // Redis erişilemez -- cache olmadan devam et
+        }
+
+        res.json(payload);
     } catch (error) {
         next(error);
     }

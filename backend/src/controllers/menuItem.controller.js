@@ -1,6 +1,7 @@
 const prisma = require('../config/database');
 const Joi = require('joi');
 const CloudinaryService = require('../services/cloudinary.service');
+const { invalidateMenuCache } = require('../utils/cacheInvalidation');
 
 const menuItemSchema = Joi.object({
     categoryId: Joi.number().integer().optional().allow(null),
@@ -69,6 +70,7 @@ exports.create = async (req, res, next) => {
             include: { category: { select: { id: true, name: true } } }
         });
 
+        await invalidateMenuCache(req.restaurantId);
         res.status(201).json({ menuItem });
     } catch (error) {
         next(error);
@@ -123,6 +125,7 @@ exports.update = async (req, res, next) => {
             include: { category: { select: { id: true, name: true } } }
         });
 
+        await invalidateMenuCache(req.restaurantId);
         res.json({ menuItem });
     } catch (error) {
         next(error);
@@ -139,6 +142,7 @@ exports.delete = async (req, res, next) => {
             return res.status(404).json({ error: 'Ürün bulunamadı' });
         }
 
+        await invalidateMenuCache(req.restaurantId);
         res.json({ message: 'Ürün silindi' });
     } catch (error) {
         next(error);
@@ -159,6 +163,8 @@ exports.toggleAvailability = async (req, res, next) => {
             where: { id: menuItem.id },
             data: { isAvailable: !menuItem.isAvailable }
         });
+
+        await invalidateMenuCache(req.restaurantId);
 
         // Emit menu update event
         const io = req.app.get('io');
@@ -185,6 +191,7 @@ exports.toggleFeatured = async (req, res, next) => {
             data: { isFeatured: !menuItem.isFeatured }
         });
 
+        await invalidateMenuCache(req.restaurantId);
         res.json({ menuItem: updated });
     } catch (error) {
         next(error);
@@ -223,6 +230,7 @@ exports.uploadImage = async (req, res, next) => {
             data: { imageUrl }
         });
 
+        await invalidateMenuCache(req.restaurantId);
         res.json({
             message: 'Resim başarıyla yüklendi',
             imageUrl: updated.imageUrl
@@ -260,6 +268,7 @@ exports.deleteImage = async (req, res, next) => {
             data: { imageUrl: null }
         });
 
+        await invalidateMenuCache(req.restaurantId);
         res.json({ message: 'Görsel silindi' });
     } catch (error) {
         next(error);

@@ -27,7 +27,7 @@ router.get('/:id', orderController.getById);
 // PATCH /api/v1/orders/:id/status
 router.patch('/:id/status', orderController.updateStatus);
 
-// DELETE /api/v1/orders/:id
-router.delete('/:id', orderController.cancel);
+// PATCH /api/v1/orders/:id/cancel
+router.patch('/:id/cancel', orderController.cancel);
 
 module.exports = router;

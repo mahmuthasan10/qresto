@@ -1,5 +1,6 @@
 const prisma = require('../config/database');
 const Joi = require('joi');
+const { invalidateMenuCache } = require('../utils/cacheInvalidation');
 
 const categorySchema = Joi.object({
     name: Joi.string().min(1).max(100).required(),
@@ -46,6 +47,7 @@ exports.create = async (req, res, next) => {
             }
         });
 
+        await invalidateMenuCache(req.restaurantId);
         res.status(201).json({ category });
     } catch (error) {
         next(error);
@@ -100,6 +102,7 @@ exports.update = async (req, res, next) => {
             where: { id: parseInt(req.params.id) }
         });
 
+        await invalidateMenuCache(req.restaurantId);
         res.json({ category: updated });
     } catch (error) {
         next(error);
@@ -119,6 +122,7 @@ exports.delete = async (req, res, next) => {
             return res.status(404).json({ error: 'Kategori bulunamadı' });
         }
 
+        await invalidateMenuCache(req.restaurantId);
         res.json({ message: 'Kategori silindi' });
     } catch (error) {
         next(error);
@@ -150,6 +154,7 @@ exports.reorder = async (req, res, next) => {
             orderBy: { displayOrder: 'asc' }
         });
 
+        await invalidateMenuCache(req.restaurantId);
         res.json({ categories });
     } catch (error) {
         next(error);
