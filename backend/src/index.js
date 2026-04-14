@@ -23,6 +23,7 @@ const analyticsRoutes = require('./routes/analytics.routes');
 
 // Import middleware
 const errorHandler = require('./middleware/errorHandler');
+const prisma = require('./config/database');
 const { logger } = require('./utils/logger');
 
 const app = express();
@@ -155,11 +156,70 @@ app.use(errorHandler);
 
 // ==================== SOCKET.IO ====================
 
-io.on('connection', (socket) => {
-  logger.info(`Socket connected: ${socket.id}`);
+// Socket.io auth middleware: JWT (admin/mutfak) veya session token (müşteri) doğrulama
+io.use(async (socket, next) => {
+  try {
+    const token = socket.handshake.auth?.token;
+    const sessionToken = socket.handshake.auth?.sessionToken;
 
-  // Join restaurant room
+    // Admin/mutfak bağlantısı: JWT doğrulama
+    if (token) {
+      const jwt = require('jsonwebtoken');
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const restaurant = await prisma.restaurant.findUnique({
+        where: { id: decoded.restaurantId },
+        select: { id: true, isActive: true }
+      });
+      if (!restaurant || !restaurant.isActive) {
+        return next(new Error('Geçersiz token veya hesap devre dışı'));
+      }
+      socket.restaurantId = restaurant.id;
+      socket.authType = 'admin';
+      return next();
+    }
+
+    // Müşteri bağlantısı: session token doğrulama
+    if (sessionToken) {
+      const { redisClient } = require('./config/redis');
+      const cachedStr = await redisClient.get(`session:${sessionToken}`);
+      if (cachedStr) {
+        const session = JSON.parse(cachedStr);
+        socket.restaurantId = session.restaurantId;
+        socket.sessionToken = sessionToken;
+        socket.authType = 'customer';
+        return next();
+      }
+      // Redis'te yoksa DB'den kontrol et
+      const session = await prisma.session.findUnique({
+        where: { sessionToken },
+        select: { restaurantId: true, isActive: true, expiresAt: true }
+      });
+      if (session && session.isActive && session.expiresAt > new Date()) {
+        socket.restaurantId = session.restaurantId;
+        socket.sessionToken = sessionToken;
+        socket.authType = 'customer';
+        return next();
+      }
+      return next(new Error('Geçersiz veya süresi dolmuş oturum'));
+    }
+
+    return next(new Error('Kimlik doğrulama gerekli (token veya sessionToken)'));
+  } catch (err) {
+    logger.warn(`Socket auth failed: ${err.message}`);
+    return next(new Error('Kimlik doğrulama başarısız'));
+  }
+});
+
+io.on('connection', (socket) => {
+  logger.info(`Socket connected: ${socket.id} (${socket.authType})`);
+
+  // Join restaurant room -- sadece doğrulanmış restaurantId'ye izin ver
   socket.on('join_restaurant', (restaurantId) => {
+    if (String(restaurantId) !== String(socket.restaurantId)) {
+      logger.warn(`Socket ${socket.id} unauthorized join attempt: restaurant ${restaurantId}`);
+      socket.emit('error', { message: 'Bu restoran odasına katılma yetkiniz yok' });
+      return;
+    }
     socket.join(`restaurant_${restaurantId}`);
     logger.info(`Socket ${socket.id} joined restaurant_${restaurantId}`);
   });

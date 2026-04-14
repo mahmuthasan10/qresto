@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import api from '@/lib/api';
-import { AxiosError } from 'axios';
+import { getApiErrorMessage } from '@/lib/handleApiError';
 
 export type OrderStatus = 'pending' | 'confirmed' | 'preparing' | 'ready' | 'completed' | 'cancelled';
 
@@ -102,10 +102,9 @@ export const useOrderStore = create<OrderState>((set, get) => ({
                 },
                 isLoading: false,
             });
-        } catch (unknownError) {
-            const error = unknownError as AxiosError<{ error: string }>;
+        } catch (err) {
             set({
-                error: error.response?.data?.error || 'Siparişler yüklenirken hata oluştu',
+                error: getApiErrorMessage(err, 'Siparişler yüklenirken hata oluştu'),
                 isLoading: false,
             });
         }
@@ -115,9 +114,8 @@ export const useOrderStore = create<OrderState>((set, get) => ({
         try {
             const response = await api.get('/orders/active');
             set({ activeOrders: response.data.orders || [] });
-        } catch (unknownError) {
-            const error = unknownError as AxiosError<{ error: string }>;
-            console.error('Active orders fetch error:', error);
+        } catch (err) {
+            console.error('Active orders fetch error:', err);
         }
     },
 
@@ -139,10 +137,9 @@ export const useOrderStore = create<OrderState>((set, get) => ({
                 isLoading: false,
             }));
             return true;
-        } catch (unknownError) {
-            const error = unknownError as AxiosError<{ error: string }>;
+        } catch (err) {
             set({
-                error: error.response?.data?.error || 'Sipariş durumu güncellenirken hata oluştu',
+                error: getApiErrorMessage(err, 'Sipariş durumu güncellenirken hata oluştu'),
                 isLoading: false,
             });
             return false;
@@ -164,10 +161,9 @@ export const useOrderStore = create<OrderState>((set, get) => ({
                 isLoading: false,
             }));
             return true;
-        } catch (unknownError) {
-            const error = unknownError as AxiosError<{ error: string }>;
+        } catch (err) {
             set({
-                error: error.response?.data?.error || 'Sipariş iptal edilirken hata oluştu',
+                error: getApiErrorMessage(err, 'Sipariş iptal edilirken hata oluştu'),
                 isLoading: false,
             });
             return false;

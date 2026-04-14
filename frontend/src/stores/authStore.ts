@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import api from '@/lib/api';
-import { AxiosError } from 'axios';
+import { getApiErrorMessage } from '@/lib/handleApiError';
 
 interface Restaurant {
     id: number;
@@ -76,10 +76,9 @@ export const useAuthStore = create<AuthState>()(
                         isLoading: false,
                     });
                     return true;
-                } catch (unknownError) {
-                    const error = unknownError as AxiosError<{ error: string }>;
+                } catch (err) {
                     set({
-                        error: error.response?.data?.error || 'Giriş yapılırken hata oluştu',
+                        error: getApiErrorMessage(err, 'Giriş yapılırken hata oluştu'),
                         isLoading: false,
                     });
                     return false;
@@ -103,10 +102,9 @@ export const useAuthStore = create<AuthState>()(
                         isLoading: false,
                     });
                     return true;
-                } catch (unknownError) {
-                    const error = unknownError as AxiosError<{ error: string }>;
+                } catch (err) {
                     set({
-                        error: error.response?.data?.error || 'Kayıt olurken hata oluştu',
+                        error: getApiErrorMessage(err, 'Kayıt olurken hata oluştu'),
                         isLoading: false,
                     });
                     return false;

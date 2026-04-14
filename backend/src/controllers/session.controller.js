@@ -1,23 +1,7 @@
 const prisma = require('../config/database');
 const { v4: uuidv4 } = require('uuid');
 const { redisClient } = require('../config/redis');
-
-// Haversine formula ile mesafe hesaplama (metre)
-const calculateDistance = (lat1, lon1, lat2, lon2) => {
-    const R = 6371e3; // Earth radius in meters
-    const φ1 = lat1 * Math.PI / 180;
-    const φ2 = lat2 * Math.PI / 180;
-    const Δφ = (lat2 - lat1) * Math.PI / 180;
-    const Δλ = (lon2 - lon1) * Math.PI / 180;
-
-    const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-        Math.cos(φ1) * Math.cos(φ2) *
-        Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-    return R * c;
-};
+const { verifyLocationDistance } = require('../utils/geo');
 
 exports.start = async (req, res, next) => {
     try {
@@ -62,40 +46,29 @@ exports.start = async (req, res, next) => {
         let locationVerified = false;
         let distance = null;
 
-        // DEV MODE: Skip location check for testing
         const isDev = process.env.NODE_ENV === 'development';
 
         if (latitude && longitude) {
-            distance = calculateDistance(
-                parseFloat(latitude),
-                parseFloat(longitude),
-                parseFloat(table.restaurant.latitude),
-                parseFloat(table.restaurant.longitude)
+            const locationCheck = verifyLocationDistance(
+                latitude, longitude,
+                table.restaurant.latitude, table.restaurant.longitude,
+                table.restaurant.locationRadius, accuracy
             );
+            distance = locationCheck.distance;
+            locationVerified = locationCheck.isWithinRange;
 
-            // accuracy cihazdan gelir, yoksa minimum 50 metre tolerans ver
-            // Restoranın kendi yarıçapına +50 metre "kapalı alan sapma payı" ekle
-            const accuracyTolerance = Math.min(Number(accuracy) || 50, 500);
-            const baseRadius = Number(table.restaurant.locationRadius) || 50;
-            const effectiveRadius = baseRadius + accuracyTolerance + 50;
-
-            locationVerified = distance <= effectiveRadius;
-
-            // In development, allow bypass if location fails
             if (!locationVerified && !isDev) {
                 return res.status(403).json({
-                    error: `Restoran alanından uzaktasınız. (Mesafe: ${Math.round(distance)}m, İzin Verilen: ${Math.round(effectiveRadius)}m)`,
+                    error: `Restoran alanından uzaktasınız. (Mesafe: ${Math.round(distance)}m, İzin Verilen: ${Math.round(locationCheck.effectiveRadius)}m)`,
                     distance: Math.round(distance),
-                    maxDistance: Math.round(effectiveRadius)
+                    maxDistance: Math.round(locationCheck.effectiveRadius)
                 });
             }
 
-            // DEV: Force verified in development
             if (isDev) {
                 locationVerified = true;
             }
         } else if (isDev) {
-            // DEV: If no location provided in dev, still allow
             locationVerified = true;
         }
 
@@ -274,8 +247,27 @@ exports.extend = async (req, res, next) => {
             return res.status(404).json({ error: 'Aktif oturum bulunamadı' });
         }
 
-        // Extend by 10 minutes (or whatever logic)
-        // Note: The logic in original code was +10 mins. 
+        // Maksimum 3 uzatma hakkı
+        const MAX_EXTENSIONS = 3;
+        if (session.extensionCount >= MAX_EXTENSIONS) {
+            return res.status(429).json({
+                error: `Oturum en fazla ${MAX_EXTENSIONS} kez uzatılabilir. Lütfen yeni bir oturum başlatın.`,
+                extensionCount: session.extensionCount,
+                maxExtensions: MAX_EXTENSIONS
+            });
+        }
+
+        // Son uzatmadan bu yana minimum 2 dakika geçmiş olmalı
+        const MIN_EXTEND_INTERVAL_MS = 2 * 60 * 1000;
+        const timeSinceLastActivity = Date.now() - new Date(session.lastActivityAt).getTime();
+        if (timeSinceLastActivity < MIN_EXTEND_INTERVAL_MS) {
+            const waitSeconds = Math.ceil((MIN_EXTEND_INTERVAL_MS - timeSinceLastActivity) / 1000);
+            return res.status(429).json({
+                error: `Çok sık uzatma isteği. ${waitSeconds} saniye sonra tekrar deneyin.`,
+                retryAfter: waitSeconds
+            });
+        }
+
         const EXTEND_MINUTES = 10;
         const newExpiresAt = new Date();
         newExpiresAt.setMinutes(newExpiresAt.getMinutes() + EXTEND_MINUTES);
@@ -284,7 +276,8 @@ exports.extend = async (req, res, next) => {
             where: { id: session.id },
             data: {
                 expiresAt: newExpiresAt,
-                lastActivityAt: new Date()
+                lastActivityAt: new Date(),
+                extensionCount: { increment: 1 }
             }
         });
 
@@ -310,7 +303,9 @@ exports.extend = async (req, res, next) => {
 
         res.json({
             session: {
-                expiresAt: updated.expiresAt
+                expiresAt: updated.expiresAt,
+                extensionCount: updated.extensionCount,
+                remainingExtensions: MAX_EXTENSIONS - updated.extensionCount
             }
         });
     } catch (error) {

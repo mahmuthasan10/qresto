@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import api from '@/lib/api';
-import { AxiosError } from 'axios';
+import { getApiErrorMessage } from '@/lib/handleApiError';
 
 interface Table {
     id: number;
@@ -37,10 +37,9 @@ export const useTableStore = create<TableState>((set) => ({
         try {
             const response = await api.get('/tables');
             set({ tables: response.data.tables || [], isLoading: false });
-        } catch (unknownError) {
-            const error = unknownError as AxiosError<{ error: string }>;
+        } catch (err) {
             set({
-                error: error.response?.data?.error || 'Masalar yüklenirken hata oluştu',
+                error: getApiErrorMessage(err, 'Masalar yüklenirken hata oluştu'),
                 isLoading: false,
             });
         }
@@ -56,10 +55,9 @@ export const useTableStore = create<TableState>((set) => ({
                 isLoading: false,
             }));
             return true;
-        } catch (unknownError) {
-            const error = unknownError as AxiosError<{ error: string }>;
+        } catch (err) {
             set({
-                error: error.response?.data?.error || 'Masa eklenirken hata oluştu',
+                error: getApiErrorMessage(err, 'Masa eklenirken hata oluştu'),
                 isLoading: false,
             });
             return false;
@@ -78,10 +76,9 @@ export const useTableStore = create<TableState>((set) => ({
                 isLoading: false,
             }));
             return true;
-        } catch (unknownError) {
-            const error = unknownError as AxiosError<{ error: string }>;
+        } catch (err) {
             set({
-                error: error.response?.data?.error || 'Masa güncellenirken hata oluştu',
+                error: getApiErrorMessage(err, 'Masa güncellenirken hata oluştu'),
                 isLoading: false,
             });
             return false;
@@ -97,10 +94,9 @@ export const useTableStore = create<TableState>((set) => ({
                 isLoading: false,
             }));
             return true;
-        } catch (unknownError) {
-            const error = unknownError as AxiosError<{ error: string }>;
+        } catch (err) {
             set({
-                error: error.response?.data?.error || 'Masa silinirken hata oluştu',
+                error: getApiErrorMessage(err, 'Masa silinirken hata oluştu'),
                 isLoading: false,
             });
             return false;
@@ -117,10 +113,9 @@ export const useTableStore = create<TableState>((set) => ({
                 ),
             }));
             return newQrCode;
-        } catch (unknownError) {
-            const error = unknownError as AxiosError<{ error: string }>;
+        } catch (err) {
             set({
-                error: error.response?.data?.error || 'QR kod yenileme başarısız',
+                error: getApiErrorMessage(err, 'QR kod yenileme başarısız'),
             });
             return null;
         }
@@ -130,10 +125,9 @@ export const useTableStore = create<TableState>((set) => ({
         try {
             const response = await api.get(`/tables/${id}/qr`);
             return response.data.qrCodeUrl || response.data.qrCode;
-        } catch (unknownError) {
-            const error = unknownError as AxiosError<{ error: string }>;
+        } catch (err) {
             set({
-                error: error.response?.data?.error || 'QR kod alınamadı',
+                error: getApiErrorMessage(err, 'QR kod alınamadı'),
             });
             return null;
         }

@@ -1,21 +1,6 @@
 const prisma = require('../config/database');
 const Joi = require('joi');
-
-// Haversine formula
-const calculateDistance = (lat1, lon1, lat2, lon2) => {
-    const R = 6371e3;
-    const φ1 = lat1 * Math.PI / 180;
-    const φ2 = lat2 * Math.PI / 180;
-    const Δφ = (lat2 - lat1) * Math.PI / 180;
-    const Δλ = (lon2 - lon1) * Math.PI / 180;
-
-    const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-        Math.cos(φ1) * Math.cos(φ2) *
-        Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
-};
+const { verifyLocationDistance } = require('../utils/geo');
 
 // Generate order number: ORD-YYYYMMDD-XXX
 const generateOrderNumber = async (restaurantId) => {
@@ -169,21 +154,15 @@ exports.createOrder = async (req, res, next) => {
         // Verify location if provided (skip in development)
         const isDev = process.env.NODE_ENV === 'development';
         if (value.latitude && value.longitude && !isDev) {
-            const distance = calculateDistance(
+            const locationCheck = verifyLocationDistance(
                 value.latitude, value.longitude,
-                parseFloat(session.restaurant.latitude),
-                parseFloat(session.restaurant.longitude)
+                session.restaurant.latitude, session.restaurant.longitude,
+                session.restaurant.locationRadius, value.accuracy
             );
 
-            // accuracy cihazdan gelir, yoksa minimum 50 metre tolerans ver
-            // Restoranın kendi yarıçapına +50 metre "kapalı alan sapma payı" ekle
-            const accuracyTolerance = Math.min(Number(value.accuracy) || 50, 500);
-            const baseRadius = Number(session.restaurant.locationRadius) || 50;
-            const effectiveRadius = baseRadius + accuracyTolerance + 50;
-
-            if (distance > effectiveRadius) {
+            if (!locationCheck.isWithinRange) {
                 return res.status(403).json({
-                    error: `Restoran alanından uzaktasınız. (Mesafe: ${Math.round(distance)}m, İzin Verilen: ${Math.round(effectiveRadius)}m)`
+                    error: `Restoran alanından uzaktasınız. (Mesafe: ${Math.round(locationCheck.distance)}m, İzin Verilen: ${Math.round(locationCheck.effectiveRadius)}m)`
                 });
             }
         }
@@ -350,24 +329,16 @@ exports.verifyLocation = async (req, res, next) => {
             return res.status(404).json({ error: 'Geçersiz QR kod' });
         }
 
-        const distance = calculateDistance(
-            parseFloat(latitude),
-            parseFloat(longitude),
-            parseFloat(table.restaurant.latitude),
-            parseFloat(table.restaurant.longitude)
+        const locationCheck = verifyLocationDistance(
+            latitude, longitude,
+            table.restaurant.latitude, table.restaurant.longitude,
+            table.restaurant.locationRadius, accuracy
         );
 
-        // accuracy cihazdan gelir, yoksa minimum 50 metre tolerans ver
-        // Restoranın kendi yarıçapına +50 metre "kapalı alan sapma payı" ekle
-        const accuracyTolerance = Math.min(Number(accuracy) || 50, 500);
-        const baseRadius = Number(table.restaurant.locationRadius) || 50;
-        const effectiveRadius = baseRadius + accuracyTolerance + 50;
-        const isValid = distance <= effectiveRadius;
-
         res.json({
-            valid: isValid,
-            distance: Math.round(distance),
-            maxDistance: Math.round(effectiveRadius)
+            valid: locationCheck.isWithinRange,
+            distance: Math.round(locationCheck.distance),
+            maxDistance: Math.round(locationCheck.effectiveRadius)
         });
     } catch (error) {
         next(error);

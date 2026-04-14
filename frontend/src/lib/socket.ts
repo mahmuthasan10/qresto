@@ -10,7 +10,12 @@ let socket: Socket | null = null;
 
 export type ConnectionStatus = 'connected' | 'connecting' | 'disconnected' | 'error';
 
-function getSocket(): Socket {
+interface SocketAuthOptions {
+    token?: string;        // JWT token (admin/mutfak)
+    sessionToken?: string; // Session token (müşteri)
+}
+
+function getSocket(auth?: SocketAuthOptions): Socket {
     if (!socket) {
         socket = io(SOCKET_URL, {
             autoConnect: false,
@@ -19,7 +24,11 @@ function getSocket(): Socket {
             reconnectionDelay: 1000,
             reconnectionDelayMax: 5000,
             timeout: 20000,
+            auth: auth || {},
         });
+    } else if (auth) {
+        // Mevcut socket varsa auth bilgilerini güncelle
+        socket.auth = auth;
     }
     return socket;
 }
@@ -29,8 +38,8 @@ class SocketService {
     private statusListeners: Set<(status: ConnectionStatus) => void> = new Set();
     private heartbeatInterval: ReturnType<typeof setInterval> | null = null;
 
-    connect(): Socket {
-        const s = getSocket();
+    connect(auth?: SocketAuthOptions): Socket {
+        const s = getSocket(auth);
         if (!s.connected) {
             this.notifyStatus('connecting');
             s.connect();
@@ -135,6 +144,10 @@ class SocketService {
         socket?.on('session_expired', callback);
     }
 
+    connectAsCustomer(sessionToken: string): Socket {
+        return this.connect({ sessionToken });
+    }
+
     removeAllListeners(): void {
         socket?.removeAllListeners();
     }
@@ -145,12 +158,12 @@ export const socketService = new SocketService();
 // React hook for socket access with connection status
 // Uses useSyncExternalStore to avoid synchronous setState in useEffect
 export function useSocket(): Socket | null {
-    const { restaurant, isAuthenticated } = useAuthStore();
+    const { restaurant, isAuthenticated, accessToken } = useAuthStore();
 
     // Manage connection lifecycle
     useEffect(() => {
         if (isAuthenticated && restaurant?.id) {
-            socketService.connect();
+            socketService.connect({ token: accessToken || undefined });
             socketService.joinRestaurant(restaurant.id);
 
             return () => {

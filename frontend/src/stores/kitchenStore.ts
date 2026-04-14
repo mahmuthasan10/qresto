@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import api from '@/lib/api';
-import { AxiosError } from 'axios';
+import { getApiErrorMessage } from '@/lib/handleApiError';
 
 export type KitchenOrderStatus = 'pending' | 'confirmed' | 'preparing' | 'ready' | 'completed' | 'cancelled';
 
@@ -61,10 +61,9 @@ export const useKitchenStore = create<KitchenState>((set) => ({
                 isLoading: false,
                 lastUpdated: new Date()
             });
-        } catch (unknownError) {
-            const error = unknownError as AxiosError<{ error: string }>;
+        } catch (err) {
             set({
-                error: error.response?.data?.error || 'Siparişler yüklenirken hata',
+                error: getApiErrorMessage(err, 'Siparişler yüklenirken hata'),
                 isLoading: false,
             });
         }
@@ -75,7 +74,6 @@ export const useKitchenStore = create<KitchenState>((set) => ({
             await api.patch(`/orders/${orderId}/status`, { status });
 
             set(state => {
-                // If completed or cancelled, remove from kitchen view
                 if (status === 'ready') {
                     return {
                         orders: state.orders.map(order =>
@@ -93,9 +91,8 @@ export const useKitchenStore = create<KitchenState>((set) => ({
                 };
             });
             return true;
-        } catch (unknownError) {
-            const error = unknownError as AxiosError<{ error: string }>;
-            set({ error: error.response?.data?.error || 'Durum güncellenemedi' });
+        } catch (err) {
+            set({ error: getApiErrorMessage(err, 'Durum güncellenemedi') });
             return false;
         }
     },
