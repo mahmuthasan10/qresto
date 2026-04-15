@@ -3,6 +3,9 @@ builder = "dockerfile"
 dockerfilePath = "Dockerfile"
 
 [deploy]
+# Railway, uygulamayı başlatmadan önce bu komutu çalıştırır.
+# Prisma migration'ları otomatik olarak uygulanır.
+startCommand = "npx prisma migrate deploy && node src/index.js"
 healthcheckPath = "/health"
 healthcheckTimeout = 300
 restartPolicyType = "on_failure"

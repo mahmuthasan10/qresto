@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(node -c \"C:/Users/Mahmut/Documents/qresto/backend/src/index.js\")",
+      "Bash(npx tsc:*)",
+      "Bash(node -c \"C:/Users/Mahmut/Documents/qresto/backend/src/config/sentry.js\")",
+      "Bash(node -c \"C:/Users/Mahmut/Documents/qresto/backend/src/middlewares/autoExtendSession.js\")"
+    ]
+  }
+}

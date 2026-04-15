@@ -1,6 +1,10 @@
 const dotenv = require('dotenv');
 dotenv.config();
 
+// Sentry: dotenv'den hemen sonra, diğer modüllerden önce başlatılmalı
+const { initSentry, Sentry } = require('./config/sentry');
+initSentry();
+
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -120,17 +124,62 @@ app.use(morgan('combined', { stream: { write: (message) => logger.info(message.t
 
 // ==================== ROUTES ====================
 
-// Health check
-app.get('/health', (req, res) => {
+// ─── Health Check ────────────────────────────────────────────────────────────
+
+// Basit liveness probe (Railway healthcheck için)
+app.get('/health', (_req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-app.get('/api/v1/health', (req, res) => {
-  res.json({
-    status: 'OK',
+// Detaylı readiness probe: DB + Redis + bellek durumu
+app.get('/api/v1/health', async (_req, res) => {
+  const checks = {
+    database: { status: 'unknown', latencyMs: null },
+    redis: { status: 'unknown', latencyMs: null },
+  };
+  let overallStatus = 'OK';
+
+  // --- DB ping ---
+  try {
+    const dbStart = Date.now();
+    await prisma.$queryRaw`SELECT 1`;
+    checks.database = { status: 'OK', latencyMs: Date.now() - dbStart };
+  } catch (err) {
+    checks.database = { status: 'ERROR', latencyMs: null };
+    overallStatus = 'DEGRADED';
+    logger.warn('Health check DB failed:', err.message);
+  }
+
+  // --- Redis ping ---
+  try {
+    const { redisClient } = require('./config/redis');
+    const redisStart = Date.now();
+    await redisClient.ping();
+    checks.redis = { status: 'OK', latencyMs: Date.now() - redisStart };
+  } catch (err) {
+    checks.redis = { status: 'ERROR', latencyMs: null };
+    overallStatus = 'DEGRADED';
+    logger.warn('Health check Redis failed:', err.message);
+  }
+
+  // --- Bellek kullanımı ---
+  const mem = process.memoryUsage();
+  const memory = {
+    heapUsedMB: Math.round(mem.heapUsed / 1024 / 1024),
+    heapTotalMB: Math.round(mem.heapTotal / 1024 / 1024),
+    rssMB: Math.round(mem.rss / 1024 / 1024),
+  };
+
+  const httpStatus = overallStatus === 'OK' ? 200 : 503;
+
+  res.status(httpStatus).json({
+    status: overallStatus,
     timestamp: new Date().toISOString(),
-    version: '1.0.0',
-    environment: process.env.NODE_ENV || 'development'
+    version: process.env.npm_package_version || '1.0.0',
+    environment: process.env.NODE_ENV || 'development',
+    uptime: Math.round(process.uptime()),
+    checks,
+    memory,
   });
 });
 
@@ -151,6 +200,11 @@ app.use('/api/v1/analytics', analyticsRoutes);
 app.use((req, res) => {
   res.status(404).json({ error: 'Endpoint bulunamadı' });
 });
+
+// Sentry error handler — errorHandler'dan ÖNCE olmalı
+if (process.env.SENTRY_DSN) {
+  app.use(Sentry.Handlers.errorHandler());
+}
 
 // Error handler
 app.use(errorHandler);

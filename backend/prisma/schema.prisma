@@ -146,6 +146,7 @@ model Treat {
   @@index([fromTableId])
   @@index([toTableId])
   @@index([status])
+  @@index([status, createdAt]) // Pending treat listeleme icin compound index
   @@map("treats")
 }
 
@@ -172,6 +173,7 @@ model Session {
   @@index([sessionToken])
   @@index([tableId])
   @@index([isActive])
+  @@index([restaurantId, isActive, expiresAt]) // Aktif oturum sorgulari icin compound index
   @@map("sessions")
 }
 

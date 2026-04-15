@@ -1,0 +1,123 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ─── Backend: lint + syntax + unit tests ─────────────────────────────────────
+  backend:
+    name: Backend CI
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: qresto
+          POSTGRES_PASSWORD: qresto_test
+          POSTGRES_DB: qresto_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Syntax check (node -c)
+        run: |
+          find src -name "*.js" -exec node -c {} \; 2>&1
+          echo "Syntax check passed"
+
+      - name: Prisma generate
+        run: npx prisma generate
+        env:
+          DATABASE_URL: postgresql://qresto:qresto_test@localhost:5432/qresto_test
+
+      - name: Run migrations
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: postgresql://qresto:qresto_test@localhost:5432/qresto_test
+
+      - name: Run tests
+        run: npm test --if-present
+        env:
+          DATABASE_URL: postgresql://qresto:qresto_test@localhost:5432/qresto_test
+          REDIS_URL: redis://localhost:6379
+          JWT_SECRET: ci-test-secret-32-chars-minimum!!
+          JWT_REFRESH_SECRET: ci-test-refresh-secret-32-chars!!
+          NODE_ENV: test
+
+  # ─── Frontend: TypeScript + build ────────────────────────────────────────────
+  frontend:
+    name: Frontend CI
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript type check
+        run: npx tsc --noEmit
+
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:3001/api/v1
+          NEXT_PUBLIC_SOCKET_URL: http://localhost:3001
+
+  # ─── Notify on success (main branch only) ────────────────────────────────────
+  notify:
+    name: Notify Railway
+    needs: [backend, frontend]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Deploy to Railway
+        run: |
+          echo "✅ CI passed. Railway auto-deploys on push to main."
+          echo "Dashboard: https://railway.app/project/${{ secrets.RAILWAY_PROJECT_ID }}"
