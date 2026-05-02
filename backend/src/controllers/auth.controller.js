@@ -232,7 +232,7 @@ exports.forgotPassword = async (req, res, next) => {
             });
 
             // Build reset URL
-            const frontendUrl = process.env.FRONTEND_URL || process.env.CORS_ORIGIN || 'http://localhost:3000';
+            const frontendUrl = process.env.FRONTEND_URL || process.env.CORS_ORIGIN;
             const resetUrl = `${frontendUrl}/admin/reset-password?token=${resetToken}`;
 
             logger.info(`Password reset requested for: ${email}`);
@@ -248,6 +248,43 @@ exports.forgotPassword = async (req, res, next) => {
         res.json({
             message: 'Eğer bu email kayıtlıysa, şifre sıfırlama bağlantısı gönderilecektir'
         });
+    } catch (error) {
+        next(error);
+    }
+};
+
+exports.logout = async (req, res, next) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(400).json({ error: 'Token gerekli' });
+        }
+
+        const token = authHeader.split(' ')[1];
+        const decoded = jwt.decode(token);
+
+        if (decoded && decoded.exp) {
+            const { redisClient } = require('../config/redis');
+            const ttl = decoded.exp - Math.floor(Date.now() / 1000);
+            if (ttl > 0) {
+                await redisClient.set(`blacklist:${token}`, '1', 'EX', ttl);
+            }
+        }
+
+        // Refresh token'i da blacklist'e ekle
+        const { refreshToken } = req.body;
+        if (refreshToken) {
+            const refreshDecoded = jwt.decode(refreshToken);
+            if (refreshDecoded && refreshDecoded.exp) {
+                const { redisClient } = require('../config/redis');
+                const ttl = refreshDecoded.exp - Math.floor(Date.now() / 1000);
+                if (ttl > 0) {
+                    await redisClient.set(`blacklist:${refreshToken}`, '1', 'EX', ttl);
+                }
+            }
+        }
+
+        res.json({ message: 'Çıkış başarılı' });
     } catch (error) {
         next(error);
     }

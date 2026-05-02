@@ -3,8 +3,12 @@
 // Cloudinary configuration
 // To use: Set NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME and NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET in .env.local
 
-const CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'demo';
-const UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'unsigned_preset';
+const CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+const UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+
+if (!CLOUD_NAME || !UPLOAD_PRESET) {
+    console.warn('Cloudinary env vars not set (NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME, NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET). Image uploads will be disabled.');
+}
 
 export interface CloudinaryUploadResult {
     secure_url: string;
@@ -37,6 +41,10 @@ export async function uploadImage(
     // Validate file type
     if (!file.type.startsWith('image/')) {
         throw new Error('Sadece resim dosyaları yüklenebilir');
+    }
+
+    if (!CLOUD_NAME || !UPLOAD_PRESET) {
+        throw new Error('Cloudinary yapılandırılmamış. Resim yükleme devre dışı.');
     }
 
     const formData = new FormData();

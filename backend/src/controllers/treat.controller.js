@@ -1,6 +1,7 @@
 const prisma = require('../config/database');
 const Joi = require('joi');
 const { logger } = require('../utils/logger');
+const { generateOrderNumber } = require('../utils/orderNumber');
 
 const createTreatSchema = Joi.object({
     fromTableId: Joi.number().integer().positive().required(),
@@ -28,6 +29,20 @@ const TreatController = {
                 return res.status(400).json({ error: 'Kendinize ikram edemezsiniz' });
             }
 
+            // Masalarin ayni restorana ait oldugunuu dogrula
+            const [fromTable, toTable] = await Promise.all([
+                prisma.table.findUnique({ where: { id: parseInt(fromTableId) }, select: { id: true, restaurantId: true } }),
+                prisma.table.findUnique({ where: { id: parseInt(toTableId) }, select: { id: true, restaurantId: true } })
+            ]);
+
+            if (!fromTable || !toTable) {
+                return res.status(404).json({ error: 'Masa bulunamadi' });
+            }
+
+            if (fromTable.restaurantId !== toTable.restaurantId) {
+                return res.status(400).json({ error: 'Masalar ayni restorana ait degil' });
+            }
+
             const treat = await prisma.treat.create({
                 data: {
                     fromTableId: parseInt(fromTableId),
@@ -46,8 +61,7 @@ const TreatController = {
             // Notify via Socket.IO (to Admin and maybe Kitchen/Destination Table)
             const io = req.app.get('io');
             if (io) {
-                // Notify logic here (omitted for brevity, can add later)
-                io.emit('new_treat', treat);
+                io.to(`restaurant_${fromTable.restaurantId}`).emit('new_treat', treat);
             }
 
             res.status(201).json(treat);
@@ -103,105 +117,104 @@ const TreatController = {
                 return res.status(404).json({ error: 'İkram bulunamadı' });
             }
 
+            const io = req.app.get('io');
+
+            // If Approved, update treat + create order atomically in a transaction
+            if (status === 'APPROVED' && currentTreat.status !== 'APPROVED') {
+                const orderNumber = await generateOrderNumber(currentTreat.toTableId ? (await prisma.table.findUnique({ where: { id: currentTreat.toTableId }, select: { restaurantId: true } }))?.restaurantId : 0, 'TRT');
+
+                const activeSession = await prisma.session.findFirst({
+                    where: {
+                        tableId: currentTreat.toTableId,
+                        isActive: true,
+                        expiresAt: { gt: new Date() }
+                    },
+                    orderBy: { startedAt: 'desc' }
+                });
+
+                const [treat, newOrder] = await prisma.$transaction(async (tx) => {
+                    const updatedTreat = await tx.treat.update({
+                        where: { id: parseInt(id) },
+                        data: { status },
+                        include: { fromTable: true, toTable: true, menuItem: true }
+                    });
+
+                    const order = await tx.order.create({
+                        data: {
+                            restaurantId: updatedTreat.toTable.restaurantId,
+                            tableId: updatedTreat.toTableId,
+                            sessionId: activeSession ? activeSession.id : null,
+                            tableNumber: String(updatedTreat.toTable.tableNumber),
+                            orderNumber,
+                            status: 'pending',
+                            totalAmount: 0,
+                            paymentMethod: 'cash',
+                            customerNotes: `İKRAM - Masa ${updatedTreat.fromTable.tableNumber} tarafindan ikram! ${updatedTreat.note ? `Not: ${updatedTreat.note}` : ''}`,
+                            orderItems: {
+                                create: [{
+                                    menuItemId: updatedTreat.menuItemId,
+                                    itemName: updatedTreat.menuItem.name,
+                                    quantity: 1,
+                                    unitPrice: 0,
+                                    subtotal: 0,
+                                    notes: updatedTreat.note || null
+                                }]
+                            }
+                        },
+                        include: { orderItems: true }
+                    });
+
+                    return [updatedTreat, order];
+                });
+
+                if (io) {
+                    const restaurantRoom = `restaurant_${treat.toTable.restaurantId}`;
+                    io.to(restaurantRoom).emit('new_order', {
+                        id: newOrder.id,
+                        orderNumber: newOrder.orderNumber,
+                        tableId: newOrder.tableId,
+                        tableNumber: newOrder.tableNumber,
+                        status: newOrder.status,
+                        totalAmount: newOrder.totalAmount,
+                        paymentMethod: newOrder.paymentMethod,
+                        customerNotes: newOrder.customerNotes,
+                        createdAt: newOrder.createdAt,
+                        orderItems: newOrder.orderItems.map(item => ({
+                            id: item.id,
+                            itemName: item.itemName,
+                            quantity: item.quantity,
+                            unitPrice: item.unitPrice,
+                            subtotal: item.subtotal,
+                            notes: item.notes || undefined,
+                        })),
+                    });
+                    logger.info(`Treat approved, created order #${newOrder.orderNumber}`);
+                }
+
+                // Notify treat status update
+                if (io) {
+                    const restaurantId = treat.fromTable?.restaurantId || treat.toTable?.restaurantId;
+                    if (restaurantId) {
+                        io.to(`restaurant_${restaurantId}`).emit('treat_status_updated', treat);
+                    }
+                }
+
+                return res.json(treat);
+            }
+
+            // Non-APPROVED status updates (REJECTED, CANCELLED)
             const treat = await prisma.treat.update({
                 where: { id: parseInt(id) },
                 data: { status },
-                include: {
-                    fromTable: true,
-                    toTable: true,
-                    menuItem: true
-                }
+                include: { fromTable: true, toTable: true, menuItem: true }
             });
-
-            const io = req.app.get('io');
-
-            // If Approved, create an Order for the destination table so it appears in Kitchen
-            if (status === 'APPROVED' && currentTreat.status !== 'APPROVED') {
-                try {
-                    // Generate a unique order number (simple timestamp based for now)
-                    const orderNumber = `TRT-${Date.now().toString().slice(-6)}`;
-
-                    // Find an active session for the destination table so the
-                    // Order can be linked properly (sessionId is optional but
-                    // avoids FK issues when a session-based lookup is attempted).
-                    const activeSession = await prisma.session.findFirst({
-                        where: {
-                            tableId: treat.toTableId,
-                            isActive: true,
-                            expiresAt: { gt: new Date() }
-                        },
-                        orderBy: { startedAt: 'desc' }
-                    });
-
-                    const newOrder = await prisma.order.create({
-                        data: {
-                            restaurantId: treat.toTable.restaurantId,
-                            tableId: treat.toTableId,
-                            sessionId: activeSession ? activeSession.id : null,
-                            tableNumber: String(treat.toTable.tableNumber),
-                            orderNumber: orderNumber,
-                            status: 'pending', // Mutfağa düşmesi için 'pending' olmalı
-                            totalAmount: 0,
-                            paymentMethod: 'cash',
-                            customerNotes: `🎁 İKRAM - Masa ${treat.fromTable.tableNumber} tarafından ikram! ${treat.note ? `Not: ${treat.note}` : ''}`,
-                            orderItems: {
-                                create: [
-                                    {
-                                        menuItemId: treat.menuItemId,
-                                        itemName: treat.menuItem.name,
-                                        quantity: 1,
-                                        unitPrice: 0,
-                                        subtotal: 0,
-                                        notes: treat.note || null
-                                    }
-                                ]
-                            }
-                        },
-                        include: {
-                            orderItems: true
-                        }
-                    });
-
-                    // Emit with the exact same shape the kitchen / admin panels expect
-                    if (io) {
-                        const restaurantRoom = `restaurant_${treat.toTable.restaurantId}`;
-                        io.to(restaurantRoom).emit('new_order', {
-                            id: newOrder.id,
-                            orderNumber: newOrder.orderNumber,
-                            tableId: newOrder.tableId,
-                            tableNumber: newOrder.tableNumber,
-                            status: newOrder.status,
-                            totalAmount: newOrder.totalAmount,
-                            paymentMethod: newOrder.paymentMethod,
-                            customerNotes: newOrder.customerNotes,
-                            createdAt: newOrder.createdAt,
-                            confirmedAt: newOrder.confirmedAt,
-                            preparingAt: newOrder.preparingAt,
-                            readyAt: newOrder.readyAt,
-                            completedAt: newOrder.completedAt,
-                            cancelledAt: newOrder.cancelledAt,
-                            cancellationReason: newOrder.cancellationReason,
-                            orderItems: newOrder.orderItems.map(item => ({
-                                id: item.id,
-                                itemName: item.itemName,
-                                quantity: item.quantity,
-                                unitPrice: item.unitPrice,
-                                subtotal: item.subtotal,
-                                notes: item.notes || undefined,
-                            })),
-                        });
-                        logger.info(`Treat approved, created order #${newOrder.orderNumber}`);
-                    }
-                } catch (err) {
-                    logger.error('Error creating order for treat:', err);
-                    // Don't fail the request, but log it. 
-                    // Ideally we might want to revert the approval or retry.
-                }
-            }
 
             // Notify update (for Admin UI etc)
             if (io) {
-                io.emit('treat_status_updated', treat);
+                const restaurantId = treat.fromTable?.restaurantId || treat.toTable?.restaurantId;
+                if (restaurantId) {
+                    io.to(`restaurant_${restaurantId}`).emit('treat_status_updated', treat);
+                }
             }
 
             res.json(treat);

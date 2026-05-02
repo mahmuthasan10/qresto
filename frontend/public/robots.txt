@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /wireframe/
+
+Sitemap: https://qresto.app/sitemap.xml

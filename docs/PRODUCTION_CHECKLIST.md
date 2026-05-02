@@ -12,6 +12,7 @@
 | `JWT_EXPIRES_IN` | Access token süresi | `15m` |
 | `JWT_REFRESH_EXPIRES_IN` | Refresh token süresi | `7d` |
 | `CORS_ORIGIN` | Frontend URL | `https://qresto.vercel.app` |
+| `FRONTEND_URL` | Frontend URL (email linkleri, QR kodları) | `https://qresto.app` |
 | `NODE_ENV` | Ortam | `production` |
 | `SENTRY_DSN` | (Opsiyonel) Hata takibi | Sentry dashboard'dan al |
 | `CLOUDINARY_CLOUD_NAME` | Görsel yükleme | Cloudinary dashboard |
@@ -33,13 +34,18 @@
 ## 2. Güvenlik Kontrolleri
 
 - [ ] `NODE_ENV=production` set edildi
-- [ ] Debug endpoint'leri production'da kapalı (`NODE_ENV` kontrolü ✅ yapıldı)
-- [ ] JWT secret'ları en az 32 karakter
-- [ ] `CORS_ORIGIN` wildcard (`*`) değil, spesifik domain
+- [x] Debug endpoint'leri production kodundan tamamen kaldırıldı
+- [ ] JWT secret'ları en az 32 karakter (validateEnv.js zorunlu kılıyor)
+- [x] `CORS_ORIGIN` wildcard (`*`) production'da sunucu başlatmayı engelliyor
 - [ ] HTTPS zorunlu (Railway + Vercel otomatik sağlar)
-- [ ] Rate limiting aktif (`RATE_LIMIT_MAX_REQUESTS=100`)
-- [ ] Socket.io auth middleware aktif ✅
-- [ ] Session extend limiti aktif (max 3 uzatma) ✅
+- [x] Rate limiting aktif (`RATE_LIMIT_MAX_REQUESTS=100`)
+- [x] Socket.io auth middleware aktif
+- [x] Session extend limiti aktif (max 8 saat mutlak ömür)
+- [x] Token revocation (logout) mekanizması Redis blacklist ile aktif
+- [x] Input sanitization (XSS) middleware aktif
+- [x] SMTP TLS doğrulaması production'da aktif
+- [x] JSON body limit 1MB (DoS koruması)
+- [x] npm audit CI pipeline'da aktif
 
 ---
 

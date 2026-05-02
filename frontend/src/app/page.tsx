@@ -298,9 +298,9 @@ export default function HomePage() {
                 </div>
                 <div>
                   <h3 className="text-white font-semibold mb-1">Telefon</h3>
-                  <a href="tel:+905001234567" className="text-gray-400 hover:text-orange-400 transition-colors">
-                    +90 (500) 123 45 67
-                  </a>
+                  <span className="text-gray-400">
+                    Yakında eklenecek
+                  </span>
                 </div>
               </div>
 
@@ -310,9 +310,9 @@ export default function HomePage() {
                 </div>
                 <div>
                   <h3 className="text-white font-semibold mb-1">WhatsApp</h3>
-                  <a href="https://wa.me/905001234567" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-orange-400 transition-colors">
-                    WhatsApp ile yazın
-                  </a>
+                  <span className="text-gray-400">
+                    Yakında eklenecek
+                  </span>
                 </div>
               </div>
             </div>

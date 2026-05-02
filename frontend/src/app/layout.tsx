@@ -22,6 +22,19 @@ export const metadata: Metadata = {
   formatDetection: {
     telephone: true,
   },
+  openGraph: {
+    title: "QResto - Akıllı QR Menü ve Sipariş Sistemi",
+    description: "Restoranlar için modern QR menü ve sipariş yönetim sistemi. Hızlı, güvenli ve kullanımı kolay.",
+    url: "https://qresto.app",
+    siteName: "QResto",
+    type: "website",
+    locale: "tr_TR",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "QResto - Akıllı QR Menü ve Sipariş Sistemi",
+    description: "Restoranlar için modern QR menü ve sipariş yönetim sistemi.",
+  },
 };
 
 export const viewport: Viewport = {

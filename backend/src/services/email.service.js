@@ -43,7 +43,7 @@ class EmailService {
             secure,
             auth: { user, pass },
             tls: {
-                rejectUnauthorized: false // Allow self-signed certs
+                rejectUnauthorized: process.env.NODE_ENV === 'production'
             }
         });
 
@@ -161,7 +161,7 @@ class EmailService {
      */
     async sendWelcome(to, restaurantName) {
         const subject = 'QResto\'ya Hoş Geldiniz! 🎉';
-        const frontendUrl = process.env.FRONTEND_URL || process.env.CORS_ORIGIN || 'http://localhost:3000';
+        const frontendUrl = process.env.FRONTEND_URL || process.env.CORS_ORIGIN;
 
         const html = `
 <!DOCTYPE html>

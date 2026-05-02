@@ -1,6 +1,10 @@
 const dotenv = require('dotenv');
 dotenv.config();
 
+// Production env validation — eksik env varsa sunucu başlamaz
+const { validateEnv } = require('./config/validateEnv');
+validateEnv();
+
 // Sentry: dotenv'den hemen sonra, diğer modüllerden önce başlatılmalı
 const { initSentry, Sentry } = require('./config/sentry');
 initSentry();
@@ -37,7 +41,8 @@ const httpServer = createServer(app);
 // CORS origin ayarı
 const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:3000';
 if (corsOrigin === '*' && process.env.NODE_ENV === 'production') {
-  logger.warn('CORS_ORIGIN is set to * in production — consider restricting to specific domains');
+  logger.error('FATAL: CORS_ORIGIN=* is not allowed in production. Set a specific domain.');
+  process.exit(1);
 }
 const corsConfig = {
   origin: corsOrigin === '*' ? true : corsOrigin,
@@ -113,11 +118,16 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
 });
 app.use('/api/v1/auth/login', authLimiter);
+app.use('/api/v1/auth/register', authLimiter);
 app.use('/api/v1/auth/forgot-password', authLimiter);
 
 // Body parsing
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true }));
+
+// Input sanitization (XSS koruması)
+const { sanitizeInput } = require('./middleware/sanitize');
+app.use(sanitizeInput);
 
 // Logging
 app.use(morgan('combined', { stream: { write: (message) => logger.info(message.trim()) } }));
@@ -294,13 +304,37 @@ io.on('connection', (socket) => {
 
 const PORT = process.env.PORT || 3001;
 
+// Graceful shutdown
+const gracefulShutdown = async (signal) => {
+  logger.info(`${signal} received. Shutting down gracefully...`);
+  httpServer.close(async () => {
+    try {
+      await prisma.$disconnect();
+      const { redisClient } = require('./config/redis');
+      await redisClient.quit();
+      logger.info('All connections closed. Exiting.');
+    } catch (err) {
+      logger.error('Error during shutdown:', err.message);
+    }
+    process.exit(0);
+  });
+  // Force exit after 10s if graceful fails
+  setTimeout(() => {
+    logger.error('Forced shutdown after timeout');
+    process.exit(1);
+  }, 10000);
+};
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
 if (require.main === module) {
   // Redis adapter'ı asenkron bağla, sonra sunucuyu başlat
   setupRedisAdapter().then(() => {
     httpServer.listen(PORT, '0.0.0.0', () => {
-      logger.info(`🚀 QResto API Server running on port ${PORT}`);
-      logger.info(`📡 WebSocket server ready`);
-      logger.info(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+      logger.info(`QResto API Server running on port ${PORT}`);
+      logger.info(`WebSocket server ready`);
+      logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
     });
   });
 }

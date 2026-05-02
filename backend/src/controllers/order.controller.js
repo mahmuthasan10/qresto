@@ -133,12 +133,6 @@ exports.getHistory = async (req, res, next) => {
     }
 };
 
-exports.create = async (req, res, next) => {
-    // This is for admin creating orders manually
-    // Customer orders go through public.controller.js
-    res.status(501).json({ message: 'Admin sipariş oluşturma - henüz implement edilmedi' });
-};
-
 exports.getById = async (req, res, next) => {
     try {
         const order = await prisma.order.findFirst({
@@ -254,11 +248,13 @@ exports.cancel = async (req, res, next) => {
 
         // Emit real-time update
         const io = req.app.get('io');
-        io.to(`restaurant_${req.restaurantId}`).emit('order_status_updated', {
-            orderId: cancelled.id,
-            orderNumber: cancelled.orderNumber,
-            status: 'cancelled'
-        });
+        if (io) {
+            io.to(`restaurant_${req.restaurantId}`).emit('order_status_updated', {
+                orderId: cancelled.id,
+                orderNumber: cancelled.orderNumber,
+                status: 'cancelled'
+            });
+        }
 
         res.json({ order: cancelled });
     } catch (error) {

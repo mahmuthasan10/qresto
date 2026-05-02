@@ -12,10 +12,27 @@ const authenticate = async (req, res, next) => {
         const token = authHeader.split(' ')[1];
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-        // Get restaurant from database
-        const restaurant = await prisma.restaurant.findUnique({
-            where: { id: decoded.restaurantId }
-        });
+        // Check token blacklist (logout)
+        const { redisClient } = require('../config/redis');
+        const isBlacklisted = await redisClient.get(`blacklist:${token}`);
+        if (isBlacklisted) {
+            return res.status(401).json({ error: 'Token geçersiz (çıkış yapılmış)' });
+        }
+
+        // Get restaurant (Redis cache with 60s TTL, then DB fallback)
+        const cacheKey = `restaurant:${decoded.restaurantId}`;
+        let restaurant;
+        const cached = await redisClient.get(cacheKey);
+        if (cached) {
+            restaurant = JSON.parse(cached);
+        } else {
+            restaurant = await prisma.restaurant.findUnique({
+                where: { id: decoded.restaurantId }
+            });
+            if (restaurant) {
+                await redisClient.set(cacheKey, JSON.stringify(restaurant), 'EX', 60);
+            }
+        }
 
         if (!restaurant) {
             return res.status(401).json({ error: 'Restoran bulunamadı' });

@@ -124,6 +124,7 @@ model Table {
   @@unique([restaurantId, tableNumber])
   @@index([restaurantId])
   @@index([qrCode])
+  @@index([restaurantId, isActive])
   @@map("tables")
 }
 

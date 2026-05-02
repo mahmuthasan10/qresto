@@ -5,7 +5,16 @@
       "Bash(node -c \"C:/Users/Mahmut/Documents/qresto/backend/src/index.js\")",
       "Bash(npx tsc:*)",
       "Bash(node -c \"C:/Users/Mahmut/Documents/qresto/backend/src/config/sentry.js\")",
-      "Bash(node -c \"C:/Users/Mahmut/Documents/qresto/backend/src/middlewares/autoExtendSession.js\")"
+      "Bash(node -c \"C:/Users/Mahmut/Documents/qresto/backend/src/middlewares/autoExtendSession.js\")",
+      "Bash(find src:*)",
+      "Bash(grep -v \"^$\")",
+      "Bash(grep -r \"parseInt.*req\\\\.\" /c/Users/Mahmut/Documents/qresto/backend/src/controllers/*.js)",
+      "WebSearch",
+      "WebFetch(domain:oxymenu.com)",
+      "WebFetch(domain:www.kobiqr.com)",
+      "WebFetch(domain:www.menulux.com)",
+      "WebFetch(domain:simprasuite.com)",
+      "WebFetch(domain:www.tabpadmenu.com)"
     ]
   }
 }

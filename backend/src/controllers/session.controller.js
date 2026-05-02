@@ -105,7 +105,8 @@ exports.start = async (req, res, next) => {
             tableName: table.tableName,
             restaurantName: table.restaurant.name,
             restaurantSlug: table.restaurant.slug,
-            expiresAt: expiresAt.toISOString()
+            expiresAt: expiresAt.toISOString(),
+            createdAt: new Date().toISOString()
         };
 
         await redisClient.set(

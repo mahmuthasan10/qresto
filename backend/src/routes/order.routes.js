@@ -18,9 +18,6 @@ router.get('/kitchen', orderController.getKitchen);
 router.get('/history', orderController.getHistory);
 
 
-// POST /api/v1/orders
-router.post('/', orderController.create);
-
 // GET /api/v1/orders/:id
 router.get('/:id', orderController.getById);
 

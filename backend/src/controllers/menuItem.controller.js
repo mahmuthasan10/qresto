@@ -168,7 +168,9 @@ exports.toggleAvailability = async (req, res, next) => {
 
         // Emit menu update event
         const io = req.app.get('io');
-        io.to(`restaurant_${req.restaurantId}`).emit('menu_updated', { type: 'availability', itemId: menuItem.id });
+        if (io) {
+            io.to(`restaurant_${req.restaurantId}`).emit('menu_updated', { type: 'availability', itemId: menuItem.id });
+        }
 
         res.json({ menuItem: updated });
     } catch (error) {

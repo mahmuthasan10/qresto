@@ -2,36 +2,7 @@ const prisma = require('../config/database');
 const Joi = require('joi');
 const { verifyLocationDistance } = require('../utils/geo');
 const { redisClient } = require('../config/redis');
-
-// Generate order number: ORD-YYYYMMDD-XXX
-// Redis INCR ile atomik sayaç -- race condition olmaz.
-// Redis erişilemezse DB count fallback ile devam eder.
-const generateOrderNumber = async (restaurantId) => {
-    const today = new Date();
-    const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
-    const redisKey = `qresto:order_counter:${restaurantId}:${dateStr}`;
-
-    try {
-        // Atomik artırım
-        const counter = await redisClient.incr(redisKey);
-        // İlk oluşturmada TTL ayarla: gece yarısına kadar + 2 saat buffer
-        if (counter === 1) {
-            const now = new Date();
-            const midnight = new Date(now);
-            midnight.setHours(26, 0, 0, 0); // +2 saat buffer
-            const ttl = Math.round((midnight.getTime() - now.getTime()) / 1000);
-            await redisClient.expire(redisKey, ttl);
-        }
-        return `ORD-${dateStr}-${String(counter).padStart(3, '0')}`;
-    } catch {
-        // Redis erişilemez: DB count fallback (race condition riski düşük, kısa süreli fallback)
-        const startOfDay = new Date(today.setHours(0, 0, 0, 0));
-        const count = await prisma.order.count({
-            where: { restaurantId, createdAt: { gte: startOfDay } }
-        });
-        return `ORD-${dateStr}-${String(count + 1).padStart(3, '0')}`;
-    }
-};
+const { generateOrderNumber } = require('../utils/orderNumber');
 
 const orderItemSchema = Joi.object({
     menuItemId: Joi.number().integer().positive().required(),

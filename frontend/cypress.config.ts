@@ -14,8 +14,7 @@ export default defineConfig({
         },
     },
     env: {
-        // Test credentials
-        adminEmail: 'admin@qresto.com',
-        adminPassword: '123456',
+        adminEmail: process.env.CYPRESS_ADMIN_EMAIL || '',
+        adminPassword: process.env.CYPRESS_ADMIN_PASSWORD || '',
     },
 });

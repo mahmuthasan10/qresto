@@ -10,6 +10,7 @@ const prisma = require('../config/database');
 
 const AUTO_EXTEND_THRESHOLD_MS = 10 * 60 * 1000; // Kalan süre 10 dk'dan azsa uzat
 const AUTO_EXTEND_MINUTES = 10; // 10 dakika uzat
+const MAX_SESSION_LIFETIME_MS = 8 * 60 * 60 * 1000; // Maksimum 8 saat oturum ömrü
 
 module.exports = async function autoExtendSession(req, res, next) {
     const token = req.headers['x-session-token'];
@@ -31,6 +32,13 @@ module.exports = async function autoExtendSession(req, res, next) {
 
         // Eşiğin üstündeyse uzatmaya gerek yok
         if (remainingMs >= AUTO_EXTEND_THRESHOLD_MS) return next();
+
+        // Maksimum oturum ömrü kontrolü
+        if (sessionData.createdAt) {
+            const createdAt = new Date(sessionData.createdAt);
+            const totalLifetime = now.getTime() - createdAt.getTime();
+            if (totalLifetime >= MAX_SESSION_LIFETIME_MS) return next();
+        }
 
         // Session'ı uzat
         const newExpiresAt = new Date(now.getTime() + AUTO_EXTEND_MINUTES * 60 * 1000);
